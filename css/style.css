@@ -6,12 +6,7 @@ html, body {
   font-size: 14px;
 }
 
-.pad {
-  margin-top:    0px;
-  margin-bottom: 0px;
-}
-
-#map {
+#map_climate, #map_species {
   margin:        0;
   margin:    0;
   border:        1px solid #ddd;
@@ -42,8 +37,10 @@ h4 {
 label.control-label,
 .selectize-input,
 .selectize-dropdown,
-#spclass,
-#species {
+#spclass_species,
+#species_species,
+#spclass_climate,
+#species_climate {
   color:     #555;
   font-size: 14px;
 }
@@ -89,7 +86,7 @@ div.outer {
 } */
 /* h1, h2, h3, h4 { font-weight: 400; } */
 
-#controls {
+#controls_species, #controls_climate {
   /* Appearance */
   background-color: white;
   padding: 0 20px 20px 20px;
@@ -99,7 +96,8 @@ div.outer {
   zoom: 0.9;
   transition: opacity 500ms 1s;
 }
-#controls:hover {
+
+#controls_species:hover, #controls_climate:hover {
   /* Fade in while hovering */
   opacity: 0.95;
   transition-delay: 0;
