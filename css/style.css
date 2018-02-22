@@ -37,10 +37,10 @@ h4 {
 label.control-label,
 .selectize-input,
 .selectize-dropdown,
-#spclass_species,
-#species_species,
-#spclass_climate,
-#species_climate {
+#class_species,
+#select_species,
+#class_climate,
+#select_climate {
   color:     #555;
   font-size: 14px;
 }
@@ -86,7 +86,7 @@ div.outer {
 } */
 /* h1, h2, h3, h4 { font-weight: 400; } */
 
-#controls_species, #controls_climate {
+#panel_species, #panel_climate {
   /* Appearance */
   background-color: white;
   padding: 0 20px 20px 20px;
@@ -97,7 +97,7 @@ div.outer {
   transition: opacity 500ms 1s;
 }
 
-#controls_species:hover, #controls_climate:hover {
+#panel_species:hover, #panel_climate:hover {
   /* Fade in while hovering */
   opacity: 0.95;
   transition-delay: 0;
@@ -142,4 +142,14 @@ a:hover {
   background-color: #1d67b8;
   color: #eee;
   border: 1px solid #1d67b8;
+}
+
+.fab {
+  margin-right: 5px;
+  color: #1d67b8;
+}
+
+.github {
+  text-align: right;
+  /* color: #1d67b8; */
 }

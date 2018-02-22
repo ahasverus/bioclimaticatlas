@@ -10,8 +10,8 @@ library(RColorBrewer)
 # setwd("~/Desktop/bioclimaticatlas")
 
 
-species <- readRDS("data/species_list.rds")
-climate <- readRDS("data/variables_list.rds")
+data_species <- readRDS("data/species_list.rds")
+data_climate <- readRDS("data/variables_list.rds")
 grd     <- readRDS("data/grid.rds")
 
 
@@ -25,7 +25,10 @@ ui <- navbarPage(
 
   ### HOME PANEL --------------------------------
 
-  tabPanel(icon("home"),
+  tabPanel(
+
+    title = icon("home"),
+    value = "tab_home",
 
     HTML("Work in progress...")
   ),
@@ -33,7 +36,10 @@ ui <- navbarPage(
 
   ### CLIMATE CHANGE PANEL ----------------------
 
-  tabPanel("Climate change", id = "climate-change",
+  tabPanel(
+
+    title = "Climate change",
+    value = "tab_climate",
 
     div(class = "outer",
 
@@ -55,7 +61,7 @@ ui <- navbarPage(
       ),
 
       absolutePanel(
-        id        = "controls_climate",
+        id        = "panel_climate",
         class     = "panel panel-default",
         fixed     = TRUE,
         draggable = TRUE,
@@ -69,7 +75,7 @@ ui <- navbarPage(
         HTML('<h4>Climate change interface</h4><hr />'),
 
         radioButtons(
-          inputId  = "searchby_climate",
+          inputId  = "language_climate",
           label    = "Select the language:",
           choices  = list("English" = "english", "French" = "french"),
           selected = "english",
@@ -78,9 +84,9 @@ ui <- navbarPage(
         ),
 
         selectInput(
-          inputId = "species_climate",
+          inputId = "select_climate",
           label   = "Select the variable:",
-          choices = sort(unique(as.character(climate[, "english"])))
+          choices = c("Select a variable" = "", sort(unique(as.character(data_climate[, "english"]))))
         ),
 
         radioButtons(
@@ -110,7 +116,16 @@ ui <- navbarPage(
           width    = 300
         ),
 
-        HTML('<hr /><a href="#" id="btn-climate" class="btn-png"><i class="fa fa-download"></i>Download as PNG</a>')
+        HTML(
+          paste0(
+            '<hr />',
+            '<a href="#" id="btn-climate" class="btn-png">',
+            '<i class="fa fa-download">',
+            '</i>',
+            'Download as PNG',
+            '</a>'
+          )
+        )
       )
     )
   ),
@@ -118,7 +133,10 @@ ui <- navbarPage(
 
   ### SPECIES DISTRIBUTION PANEL ----------------
 
-  tabPanel("Species distribution", id = "species-distribution",
+  tabPanel(
+
+    title = "Species distribution",
+    value = "tab_species",
 
     div(class = "outer",
 
@@ -129,7 +147,7 @@ ui <- navbarPage(
       ),
 
       absolutePanel(
-        id        = "controls_species",
+        id        = "panel_species",
         class     = "panel panel-default",
         fixed     = TRUE,
         draggable = TRUE,
@@ -143,16 +161,16 @@ ui <- navbarPage(
         HTML('<h4>Species distribution interface</h4><hr />'),
 
         radioButtons(
-          inputId  = "searchby_species",
+          inputId  = "language_species",
           label    = "Search species by:",
-          choices  = list("English name" = "common_en", "French name" = "common_fr", "Scientific name" = "latin", "Inuktitut" = "inuktitut"),
+          choices  = list("English name" = "common_en", "French name" = "common_fr", "Scientific name" = "latin", "Inuktitut name" = "inuktitut"),
           selected = "latin",
           inline   = FALSE,
           width    = 300
         ),
 
         radioButtons(
-          inputId  = "spclass_species",
+          inputId  = "class_species",
           label    = "Select the species:",
           choices  = list("Birds" = "Aves", "Mammals" = "Mammalia"),
           selected = "Aves",
@@ -161,9 +179,9 @@ ui <- navbarPage(
         ),
 
         selectInput(
-          inputId = "species_species",
+          inputId = "select_species",
           label   = NULL,
-          choices = sort(unique(as.character(species[, "latin"])))
+          choices = c("Select a species" = "", sort(unique(as.character(data_species[, "latin"]))))
         ),
 
         radioButtons(
@@ -193,7 +211,16 @@ ui <- navbarPage(
           width    = 300
         ),
 
-        HTML('<hr /><a href="#" id="btn-species" class="btn-png"><i class="fa fa-download"></i>Download as PNG</a>')
+        HTML(
+          paste0(
+            '<hr />',
+            '<a href="#" id="btn-species" class="btn-png">',
+            '<i class="fa fa-download">',
+            '</i>',
+            'Download as PNG',
+            '</a>'
+          )
+        )
       )
     )
   ),
@@ -201,16 +228,29 @@ ui <- navbarPage(
 
   ### ECOSYSTEM CHANGES PANEL -------------------
 
-  tabPanel("Ecosystem changes",
+  tabPanel(
+
+    title = "Ecosystem changes",
+    value = "tab_ecosystem",
 
     HTML("Work in progress...")
   ),
 
 
-  ### ABOUT PANEL --------------------------------
+  ### Get Code PANEL -------------------------
 
-  tabPanel("Data access",
+  tabPanel(
 
-    HTML("Work in progress...")
+    title = HTML(
+      paste0(
+        "<li class=\"github\">",
+        "<a href=\"https://github.com/ahasverus/shiny-tundra-cc\" target=\"_blank\">",
+        "<i class=\"fab fa-github\">",
+        "</i>",
+        "Get Code",
+        "</a>",
+        "</li>"
+      )
+    )
   )
 )
