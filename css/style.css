@@ -19,7 +19,7 @@ html, body {
 } */
 
 h2 {
-  /* font-family: 'Source Sans Pro'; */
+  /* font-family: Source Sans Pro; */
   /* font-weight: 300; */
   /* color:       #555; */
   /* text-align:  center; */
@@ -81,7 +81,7 @@ div.outer {
 
 /* Customize fonts */
 /* body, label, input, button, select {
-  font-family: 'Helvetica Neue', Helvetica;
+  font-family: Helvetica Neue, Helvetica;
   font-weight: 200;
 } */
 /* h1, h2, h3, h4 { font-weight: 400; } */
@@ -146,10 +146,135 @@ a:hover {
 
 .fab {
   margin-right: 5px;
-  color: #1d67b8;
 }
 
 .github {
   text-align: right;
   /* color: #1d67b8; */
+}
+
+h5 {
+  color:     #555;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+#menu {
+  overflow: scroll;
+  height: 100px;
+  display: none;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  margin-top: 2px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+#grad {
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  padding: 0;
+  height: 37px;
+  z-index: 999;
+}
+
+#color-sel {
+  vertical-align: middle;
+  margin: 5px;
+  padding: 0;
+  height: 25px;
+  width: 85%;
+  float: left;
+  border-radius: 5px;
+}
+
+.color-list {
+  margin: 2px 5px;
+  padding: 0;
+  height: 25px;
+  border: 1px solid white;
+  border-radius: 5px;
+}
+
+.grad1 {
+  background: red;
+  background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
+}
+.grad2 {
+  background: #00441b;
+  background: linear-gradient(to right, #f7fcfd,#e5f5f9,#ccece6,#99d8c9,#66c2a4,#41ae76,#238b45,#006d2c,#00441b);
+}
+
+.grad3 {
+  background: #4d004b;
+  background: linear-gradient(to right, #f7fcfd, #e0ecf4,#bfd3e6,#9ebcda,#8c96c6,#8c6bb1,#88419d,#810f7c,#4d004b)
+}
+
+.color-list:hover {
+  border: 1px solid #888;
+}
+
+#color-arrow {
+  float: left;
+  width: 8%;
+  height: 25px;
+  margin: 5px;
+  margin-right: 0;
+  text-align: center;
+}
+
+i.fa-caret-down {
+  padding: 0;
+  padding-top: 5px;
+  margin: 0;
+}
+
+#menu:hover, #grad:hover {
+  cursor: pointer;
+}
+
+#menu > div:first-of-type {
+  margin-top: 4px;
+}
+
+
+#menu > div:last-of-type {
+  margin-bottom: 4px;
+}
+
+.shadow {
+  box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.2), 0 0 0 0 rgba(0, 0, 0, 0.19);
+}
+
+.legend {
+  text-align: center;
+}
+
+.navbar .navbar-nav {
+  /* float: right */
+}
+.navbar .navbar-header .navbar-brand {
+  /* color: #1d67b8; */
+}
+
+
+#nav {
+  /* list-style: none; */
+  /* margin: 0; */
+  /* padding: 0; */
+  text-align: right;
+  width: 87.5%;
+}
+
+#nav li {
+  float: left;
+}
+
+#nav li:last-of-type a {
+  color: #1d67b8;
+  /* float: right; */
+}
+
+#nav li:nth-last-child(1) {
+  float: none;
+  display: inline-block;
 }

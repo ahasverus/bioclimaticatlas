@@ -4,16 +4,22 @@ library(shinyjs)
 library(sp)
 library(raster)
 library(rgdal)
+library(colourpicker)
 library(RColorBrewer)
 
-# setwd("~/Desktop/")
+
+# setwd("~/Documents/bioclimaticatlas")
 
 
 data_species <- readRDS("data/species_list.rds")
-for (i in 1:ncol(data_species)) data_species[ , i] <- as.character(data_species[ , i])
 data_climate <- readRDS("data/variables_list.rds")
-for (i in 1:ncol(data_climate)) data_climate[ , i] <- as.character(data_climate[ , i])
-grd     <- readRDS("data/grid.rds")
+grd          <- readRDS("data/grid.rds")
+
+rampcolors <- data.frame(
+  palette          = rownames(brewer.pal.info),
+  maxcolors        = brewer.pal.info[ , "maxcolors"],
+  stringsAsFactors = FALSE
+)
 
 server <- function(input, output, session) {
 
@@ -213,6 +219,12 @@ server <- function(input, output, session) {
     }
   })
 
+  couleur <- reactive({
+
+    input$color
+  })
+
+
 
   ### DEFINE REACTIVE EXPRESSIONS FOR MAP -------
 
@@ -221,9 +233,9 @@ server <- function(input, output, session) {
     if (!is.null(var_selected())) {
 
       pos <- which(
-        species[ , "common_en"] == var_selected() |
-        species[ , "common_fr"] == var_selected() |
-        species[ , "latin"]     == var_selected()
+        data_species[ , "common_en"] == var_selected() |
+        data_species[ , "common_fr"] == var_selected() |
+        data_species[ , "latin"]     == var_selected()
       )
 
       if (period() == "1981-2010"){
@@ -231,7 +243,7 @@ server <- function(input, output, session) {
           "data/",
           tolower(spclass()),
           "/",
-          species[pos, "code"],
+          data_species[pos, "code"],
           "_",
           period(),
           "_",
@@ -242,7 +254,7 @@ server <- function(input, output, session) {
           "data/",
           tolower(spclass()),
           "/",
-          species[pos, "code"],
+          data_species[pos, "code"],
           "_",
           period(),
           "_",
@@ -259,24 +271,11 @@ server <- function(input, output, session) {
   ras <- reactive({
 
     if (!is.null(var_selected())) {
-      readRDS(paste0(raster_path(), ".rds"))
-    } else {
-      NULL
-    }
-  })
-
-  palette <- reactive({
-
-    if (!is.null(var_selected())) {
-      if (information() %in% c("Observations", "Binaries")){
-        "FAC"
-      } else {
-        if (information() == "Probabilities"){
-          "PRB"
-        } else {
-          "UNC"
-        }
+      ras <- readRDS(paste0(raster_path(), ".rds"))
+      if (information() == "Probabilities") {
+        ras[][which(!is.na(ras[]))] <- ifelse(ras[][which(!is.na(ras[]))] > 1, 1, ras[][which(!is.na(ras[]))])
       }
+      ras
     } else {
       NULL
     }
@@ -285,24 +284,22 @@ server <- function(input, output, session) {
   couleurs <- reactive({
 
     if (!is.null(var_selected())) {
-      if (information() %in% c("Observations", "Binaries")){
-        c("#E0E393", "#666131")
-        # c("#FFFFCC", "#800026")
+
+      mycol <- brewer.pal(
+        n    = rampcolors[which(rampcolors[ , "palette"] == gsub("-rev", "", couleur())), "maxcolors"],
+        name = gsub("-rev", "", couleur())
+      )
+      if (length(grep("-rev", couleur())) == 1) { # If reverse palette
+        mycol <- mycol[length(mycol):1]
+      }
+
+      if (length(unique(values(ras()))) > 2) { # More than 1 single value
+        colorNumeric(palette = mycol, domain = values(ras()), na.color = "transparent")
       } else {
-        if (information() == "Probabilities"){
-          colorBin(
-            palette  = colorRampPalette(brewer.pal(n = 9, name = "YlOrRd"))(11),
-            domain   = values(ras()),
-            bin      = seq(0, 1, by = .10),
-            na.color = "transparent"
-          )
+        if (length(which(unique(values(ras())) == 0) == 1)) {
+          colorNumeric(palette = mycol[1], domain = values(ras()), na.color = "transparent")
         } else {
-          colorBin(
-            palette  = colorRampPalette(brewer.pal(n = 9, name = "BuPu"))(11),
-            domain   = values(ras()),
-            bin      = seq(0, .5, by = .05),
-            na.color = "transparent"
-          )
+          colorNumeric(palette = mycol[length(mycol)], domain = values(ras()), na.color = "transparent")
         }
       }
     } else {
@@ -407,43 +404,19 @@ server <- function(input, output, session) {
         )
 
         ### Add legend
-        if (palette() == "FAC"){
-          leafletProxy(mapId = paste0("map_", suffix())) %>%
-          addLegend(
-            position  = "bottomleft",
-            colors    = couleurs(),
-            labels    = c("Absence", "Presence"),
-            title     = "Map legend",
-            opacity   = 1,
-            className = "info legend"
-          )
-        }
-        if (palette() == "PRB"){
-          leafletProxy(mapId = paste0("map_", suffix())) %>%
-          addLegend(
-            position  = "bottomleft",
-            pal       = couleurs(),
-            values    = seq(0, 1, by = .1),
-            title     = "Map legend",
-            opacity   = 1,
-            className = "info legend"
-          )
-        }
-        if (palette() == "UNC"){
-          leafletProxy(mapId = paste0("map_", suffix())) %>%
-          addLegend(
-            position  = "bottomleft",
-            pal       = couleurs(),
-            values    = seq(0, .5, by = .05),
-            title     = "Map legend",
-            opacity   = 1,
-            className = "info legend"
-          )
-        }
+        leafletProxy(mapId = paste0("map_", suffix())) %>%
+        addLegend(
+          position  = "bottomleft",
+          pal       = couleurs(),
+          values    = ras()[],
+          title     = paste0(var_selected(), "<br/>(", information(), ")"),
+          opacity   = 1,
+          className = "info legend"
+        )
 
       } else {
 
-        ### Update map
+        ### Reset map
         leafletProxy(
           mapId = paste0("map_", suffix()),
           data  = grd) %>%
@@ -505,6 +478,26 @@ server <- function(input, output, session) {
     #   selected = var_list()[1]
     # )
   })
+
+  # onclick("panel_species", function(){
+  #   hide(id = "menu")
+  #   removeClass(id = "grad", class = "shadow")
+  # })
+
+  observe({
+    hide(id = "color")
+  })
+
+  onclick("grad", function(){
+    toggle(id = "menu")
+    toggleClass(id = "grad", class = "shadow")
+  })
+
+  onclick("menu", function(){
+    toggle(id = "menu")
+    toggleClass(id = "grad", class = "shadow")
+  })
+
 
   # observe({
   #   if (input$nav == "climate-change")

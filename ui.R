@@ -4,15 +4,16 @@ library(shinyjs)
 library(sp)
 library(raster)
 library(rgdal)
+library(colourpicker)
 library(RColorBrewer)
 
 
-# setwd("~/Desktop/bioclimaticatlas")
+# setwd("~/Documents/bioclimaticatlas")
 
 
 data_species <- readRDS("data/species_list.rds")
 data_climate <- readRDS("data/variables_list.rds")
-grd     <- readRDS("data/grid.rds")
+grd          <- readRDS("data/grid.rds")
 
 
 
@@ -47,11 +48,14 @@ ui <- navbarPage(
 
       tags$head(
         includeCSS("css/style.css"),
+        includeCSS("css/color-gradients.css"),
         tags$link(
           rel  = "stylesheet",
           type = "text/css",
           href = "https://use.fontawesome.com/releases/v5.0.6/css/all.css"
-        )
+        ),
+        includeScript("js/appscript.js")
+        # tags$script(src = "js/appscript.js")
       ),
 
       leafletOutput(
@@ -211,6 +215,13 @@ ui <- navbarPage(
           width    = 300
         ),
 
+        includeHTML("includes/color-picker.html"),
+        textInput(
+          inputId = "color",
+          label   = "",
+          value   = ""
+        ),
+
         HTML(
           paste0(
             '<hr />',
@@ -234,23 +245,10 @@ ui <- navbarPage(
     value = "tab_ecosystem",
 
     HTML("Work in progress...")
-  ),
+  )
 
 
   ### Get Code PANEL -------------------------
 
-  tabPanel(
-
-    title = HTML(
-      paste0(
-        "<li class=\"github\">",
-        "<a href=\"https://github.com/ahasverus/shiny-tundra-cc\" target=\"_blank\">",
-        "<i class=\"fab fa-github\">",
-        "</i>",
-        "Get Code",
-        "</a>",
-        "</li>"
-      )
-    )
-  )
+  # Add with jQuery
 )
