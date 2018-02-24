@@ -1,37 +1,113 @@
-html, body {
-  width:   100%;
-  height:  100%;
-  margin:  0;
-  padding: 0;
+html,
+body {
+  width:     100%;
+  height:    100%;
+  margin:    0;
+  padding:   0;
   font-size: 14px;
 }
 
-#map_climate, #map_species {
-  margin:        0;
-  margin:    0;
-  border:        1px solid #ddd;
-  border-radius: 5px;
-  z-index:       0;
-  height: 100%;
-}
-/* .legend {
-  width: 150px;
-} */
 
-h2 {
-  /* font-family: Source Sans Pro; */
-  /* font-weight: 300; */
-  /* color:       #555; */
-  /* text-align:  center; */
-  /* margin-bottom: 30px; */
-  /* padding: 0; */
+/* PAGE CONTAINER ---------------------------- */
+
+div.outer {
+  position: fixed;
+  top:      41px;
+  left:     0;
+  right:    0;
+  bottom:   0;
+  overflow: hidden;
+  padding:  0;
 }
+
+
+/* NAVBAR STYLE ------------------------------ */
+
+#nav {
+  text-align: right;
+  width:      87.5%;
+}
+
+#nav li {
+  float: left;
+}
+
+#nav li:nth-last-child(1) {
+  float:   none;
+  display: inline-block;
+}
+
+#nav li:last-of-type a {
+  color: #1d67b8;
+}
+
+#nav li:last-of-type a:hover {
+  color: #0d2e52;
+}
+
+
+/* COMMON TAGS ------------------------------- */
+
 h4 {
   text-align: center;
   color:      #555;
   font-size:  16px;
   margin-top: 20px;
-  /* padding-top: 0; */
+}
+
+h5 {
+  color:       #555;
+  font-size:   14px;
+  font-weight: 700;
+}
+
+a {
+  color: #555;
+}
+
+a:hover {
+  text-decoration: none;
+  color:           #555;
+}
+
+.fab {
+  margin-right: 5px;
+}
+
+
+/* LEAFLET MAP ------------------------------- */
+
+#map_climate,
+#map_species {
+  margin:        0;
+  margin:        0;
+  border:        1px solid #ddd;
+  border-radius: 5px;
+  z-index:       0;
+  height:        100%;
+}
+
+.leaflet-container {
+  background-color: white !important;
+}
+
+
+/* FORM STYLE -------------------------------- */
+
+#panel_species,
+#panel_climate {
+  background-color: white;
+  padding:          0 20px 20px 20px;
+  cursor:           move;
+  opacity:          0.65;
+  zoom:             0.9;
+  transition:       opacity 500ms 1s;
+}
+
+#panel_species:hover,
+#panel_climate:hover {
+  opacity:          0.95;
+  transition-delay: 0;
 }
 
 label.control-label,
@@ -69,212 +145,110 @@ div.radio {
 }
 
 
-div.outer {
-  position: fixed;
-  top: 41px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-  padding: 0;
+/* MAP LEGEND -------------------------------- */
+
+.legend {
+  text-align: center;
 }
 
-/* Customize fonts */
-/* body, label, input, button, select {
-  font-family: Helvetica Neue, Helvetica;
-  font-weight: 200;
-} */
-/* h1, h2, h3, h4 { font-weight: 400; } */
 
-#panel_species, #panel_climate {
-  /* Appearance */
-  background-color: white;
-  padding: 0 20px 20px 20px;
-  cursor: move;
-  /* Fade out while not hovering */
-  opacity: 0.65;
-  zoom: 0.9;
-  transition: opacity 500ms 1s;
-}
-
-#panel_species:hover, #panel_climate:hover {
-  /* Fade in while hovering */
-  opacity: 0.95;
-  transition-delay: 0;
-}
-
-/* Position and style citation */
-/* #cite {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  font-size: 12px;
-} */
-
-/* If not using map tiles, show a white background */
-.leaflet-container {
-  background-color: white !important;
-}
+/* DOWNLOAD BUTTON --------------------------- */
 
 .btn-png {
-  /* color: red; */
-  /* font-weight: bold; */
-  padding: 5px 10px;
-  border: 1px solid #ccc;
+  padding:       5px 10px;
+  border:        1px solid #ccc;
   border-radius: 5px;
-  /* color: #555; */
 }
 
 .btn-png i {
   padding-right: 5px;
 }
 
-a {
-  color: #555;
-}
-
-a:hover {
-  text-decoration: none;
-  color: #555;
-}
-
 .btn-png:hover {
   background-color: #1d67b8;
-  color: #eee;
-  border: 1px solid #1d67b8;
+  border:           1px solid #1d67b8;
+  color:            #eee;
 }
 
-.fab {
-  margin-right: 5px;
-}
 
-.github {
-  text-align: right;
-  /* color: #1d67b8; */
-}
+/* COLOR PICKER ------------------------------ */
 
-h5 {
-  color:     #555;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-#menu {
-  overflow: scroll;
-  height: 100px;
-  display: none;
-  border: 1px solid #cccccc;
+#menu_species,
+#menu_climate {
+  overflow:      scroll;
+  height:        100px;
+  display:       none;
+  border:        1px solid #cccccc;
   border-radius: 5px;
-  margin-top: 2px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  margin-top:    2px;
+  box-shadow:    0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
-#grad {
-  border: 1px solid #cccccc;
+#grad_species,
+#grad_climate {
+  border:        1px solid #cccccc;
   border-radius: 5px;
-  padding: 0;
-  height: 37px;
-  z-index: 999;
+  padding:       0;
+  height:        37px;
+  z-index:       999;
 }
 
-#color-sel {
+#color-sel_species,
+#color-sel_climate {
   vertical-align: middle;
-  margin: 5px;
-  padding: 0;
-  height: 25px;
-  width: 85%;
-  float: left;
-  border-radius: 5px;
+  margin:         5px;
+  padding:        0;
+  height:         25px;
+  width:          85%;
+  float:          left;
+  border-radius:  5px;
 }
 
 .color-list {
-  margin: 2px 5px;
-  padding: 0;
-  height: 25px;
-  border: 1px solid white;
+  margin:        2px 5px;
+  padding:       0;
+  height:        25px;
+  border:        1px solid white;
   border-radius: 5px;
-}
-
-.grad1 {
-  background: red;
-  background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
-}
-.grad2 {
-  background: #00441b;
-  background: linear-gradient(to right, #f7fcfd,#e5f5f9,#ccece6,#99d8c9,#66c2a4,#41ae76,#238b45,#006d2c,#00441b);
-}
-
-.grad3 {
-  background: #4d004b;
-  background: linear-gradient(to right, #f7fcfd, #e0ecf4,#bfd3e6,#9ebcda,#8c96c6,#8c6bb1,#88419d,#810f7c,#4d004b)
 }
 
 .color-list:hover {
   border: 1px solid #888;
 }
 
-#color-arrow {
-  float: left;
-  width: 8%;
-  height: 25px;
-  margin: 5px;
+#color-arrow_species,
+#color-arrow_climate {
+  float:        left;
+  width:        8%;
+  height:       25px;
+  margin:       5px;
   margin-right: 0;
-  text-align: center;
+  text-align:   center;
 }
 
 i.fa-caret-down {
-  padding: 0;
+  padding:     0;
   padding-top: 5px;
-  margin: 0;
+  margin:      0;
 }
 
-#menu:hover, #grad:hover {
+#menu_species:hover,
+#grad_species:hover,
+#menu_climate:hover,
+#grad_climate:hover {
   cursor: pointer;
 }
 
-#menu > div:first-of-type {
+#menu_species > div:first-of-type,
+#menu_climate > div:first-of-type {
   margin-top: 4px;
 }
 
-
-#menu > div:last-of-type {
+#menu_species > div:last-of-type,
+#menu_climate > div:last-of-type {
   margin-bottom: 4px;
 }
 
 .shadow {
   box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.2), 0 0 0 0 rgba(0, 0, 0, 0.19);
-}
-
-.legend {
-  text-align: center;
-}
-
-.navbar .navbar-nav {
-  /* float: right */
-}
-.navbar .navbar-header .navbar-brand {
-  /* color: #1d67b8; */
-}
-
-
-#nav {
-  /* list-style: none; */
-  /* margin: 0; */
-  /* padding: 0; */
-  text-align: right;
-  width: 87.5%;
-}
-
-#nav li {
-  float: left;
-}
-
-#nav li:last-of-type a {
-  color: #1d67b8;
-  /* float: right; */
-}
-
-#nav li:nth-last-child(1) {
-  float: none;
-  display: inline-block;
 }

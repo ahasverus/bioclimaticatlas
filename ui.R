@@ -4,7 +4,6 @@ library(shinyjs)
 library(sp)
 library(raster)
 library(rgdal)
-library(colourpicker)
 library(RColorBrewer)
 
 
@@ -122,6 +121,35 @@ ui <- navbarPage(
 
         HTML(
           paste0(
+            "<h5>Select a color palette:</h5>",
+            "<div class=\"color-picker\">",
+            "  <div id=\"grad_climate\">",
+            "    <div id=\"color-sel_climate\" class=\"YlGnBu\"></div>",
+            "    <div id=\"color-arrow_climate\">",
+            "      <i class=\"fa fa-caret-down\"></i>",
+            "    </div>",
+            "  </div>",
+            "  <div id=\"menu_climate\">"
+          )
+        ),
+
+        includeHTML("includes/color-picker.html"),
+
+        HTML(
+          paste0(
+          "  </div>",
+          "</div>"
+          )
+        ),
+
+        textInput(
+          inputId = "color_climate",
+          label   = "",
+          value   = ""
+        ),
+
+        HTML(
+          paste0(
             '<hr />',
             '<a href="#" id="btn-climate" class="btn-png">',
             '<i class="fa fa-download">',
@@ -215,9 +243,31 @@ ui <- navbarPage(
           width    = 300
         ),
 
+        HTML(
+          paste0(
+            "<h5>Select a color palette:</h5>",
+            "<div class=\"color-picker\">",
+            "  <div id=\"grad_species\">",
+            "    <div id=\"color-sel_species\" class=\"YlGnBu\"></div>",
+            "    <div id=\"color-arrow_species\">",
+            "      <i class=\"fa fa-caret-down\"></i>",
+            "    </div>",
+            "  </div>",
+            "  <div id=\"menu_species\">"
+          )
+        ),
+
         includeHTML("includes/color-picker.html"),
+
+        HTML(
+          paste0(
+          "  </div>",
+          "</div>"
+          )
+        ),
+
         textInput(
-          inputId = "color",
+          inputId = "color_species",
           label   = "",
           value   = ""
         ),
@@ -244,7 +294,7 @@ ui <- navbarPage(
     title = "Ecosystem changes",
     value = "tab_ecosystem",
 
-    HTML("Work in progress...")
+    HTML("Coming soon...")
   )
 
 

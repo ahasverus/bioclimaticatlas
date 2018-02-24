@@ -132,7 +132,7 @@ server <- function(input, output, session) {
               NULL
             } else {
               pos <- NULL
-              for (i in c("common_en", "common_fr", "latin")) {
+              for (i in c("common_en", "common_fr", "latin", "inuktitut")) {
                 if (length(which(data_species[ , i] == input[[paste0("select_", suffix())]])) > 0) {
                   pos <- which(data_species[ , i] == input[[paste0("select_", suffix())]])
                 }
@@ -221,9 +221,8 @@ server <- function(input, output, session) {
 
   couleur <- reactive({
 
-    input$color
+    input[[paste0("color_", suffix())]]
   })
-
 
 
   ### DEFINE REACTIVE EXPRESSIONS FOR MAP -------
@@ -232,36 +231,86 @@ server <- function(input, output, session) {
 
     if (!is.null(var_selected())) {
 
-      pos <- which(
-        data_species[ , "common_en"] == var_selected() |
-        data_species[ , "common_fr"] == var_selected() |
-        data_species[ , "latin"]     == var_selected()
-      )
+      if (suffix() == "species") {
 
-      if (period() == "1981-2010"){
-        paste0(
-          "data/",
-          tolower(spclass()),
-          "/",
-          data_species[pos, "code"],
-          "_",
-          period(),
-          "_",
-          tolower(information())
+        pos <- which(
+          data_species[ , "common_en"] == var_selected() |
+          data_species[ , "common_fr"] == var_selected() |
+          data_species[ , "latin"]     == var_selected() |
+          data_species[ , "inuktitut"] == var_selected()
         )
+
+        if (period() == "1981-2010"){
+          paste0(
+            "data/",
+            tolower(spclass()),
+            "/",
+            data_species[pos, "code"],
+            "_",
+            period(),
+            "_",
+            tolower(information())
+          )
+        } else {
+          paste0(
+            "data/",
+            tolower(spclass()),
+            "/",
+            data_species[pos, "code"],
+            "_",
+            period(),
+            "_",
+            tolower(gsub("\\.", "", rcp())),
+            "_",
+            tolower(information())
+          )
+        }
       } else {
-        paste0(
-          "data/",
-          tolower(spclass()),
-          "/",
-          data_species[pos, "code"],
-          "_",
-          period(),
-          "_",
-          tolower(gsub("\\.", "", rcp())),
-          "_",
-          tolower(information())
-        )
+        if (suffix() == "climate") {
+
+          pos <- which(
+            data_climate[ , "english"] == var_selected() |
+            data_climate[ , "french"]  == var_selected()
+          )
+
+          if (period() == "1981-2010"){
+            paste0(
+              "data/climate/",
+              data_climate[pos, "code"],
+              "_",
+              gsub("-", "", period()),
+              "_",
+              ifelse(
+                information() == "Climate normals",
+                "mean",
+                ifelse(
+                  information() == "Uncertainties",
+                  "sd",
+                  "diff"
+                )
+              )
+            )
+          } else {
+            paste0(
+              "data/climate/",
+              data_climate[pos, "code"],
+              "_",
+              gsub("-", "", period()),
+              "_",
+              tolower(gsub("\\.", "", rcp())),
+              "_",
+              ifelse(
+                information() == "Climate normals",
+                "mean",
+                ifelse(
+                  information() == "Uncertainties",
+                  "sd",
+                  "diff"
+                )
+              )
+            )
+          }
+        }
       }
     } else {
       NULL
@@ -409,7 +458,7 @@ server <- function(input, output, session) {
           position  = "bottomleft",
           pal       = couleurs(),
           values    = ras()[],
-          title     = paste0(var_selected(), "<br/>(", information(), ")"),
+          title     = information(),
           opacity   = 1,
           className = "info legend"
         )
@@ -485,19 +534,29 @@ server <- function(input, output, session) {
   # })
 
   observe({
-    hide(id = "color")
+    hide(id = "color_species")
+    hide(id = "color_climate")
   })
 
-  onclick("grad", function(){
-    toggle(id = "menu")
-    toggleClass(id = "grad", class = "shadow")
+  onclick("grad_species", function(){
+    toggle(id = "menu_species")
+    toggleClass(id = "grad_species", class = "shadow")
   })
 
-  onclick("menu", function(){
-    toggle(id = "menu")
-    toggleClass(id = "grad", class = "shadow")
+  onclick("grad_climate", function(){
+    toggle(id = "menu_climate")
+    toggleClass(id = "grad_climate", class = "shadow")
   })
 
+  onclick("menu_species", function(){
+    toggle(id = "menu_species")
+    toggleClass(id = "grad_species", class = "shadow")
+  })
+
+  onclick("menu_climate", function(){
+    toggle(id = "menu_climate")
+    toggleClass(id = "grad_climate", class = "shadow")
+  })
 
   # observe({
   #   if (input$nav == "climate-change")
