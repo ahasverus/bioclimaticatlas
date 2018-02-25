@@ -11,9 +11,9 @@ library(RColorBrewer)
 # setwd("~/Documents/bioclimaticatlas")
 
 
-data_species <- readRDS("data/species_list.rds")
-data_climate <- readRDS("data/variables_list.rds")
-grd          <- readRDS("data/grid.rds")
+data_species <- readRDS("data/infos/species_list.rds")
+data_climate <- readRDS("data/infos/variables_list.rds")
+grd          <- readRDS("data/background/grid.rds")
 
 rampcolors <- data.frame(
   palette          = rownames(brewer.pal.info),
@@ -557,6 +557,27 @@ server <- function(input, output, session) {
     toggle(id = "menu_climate")
     toggleClass(id = "grad_climate", class = "shadow")
   })
+
+  onclick("btn-species", function(){
+    toggle(id = "save_species")
+    toggleClass(id = "btn-species", class = "shadow")
+  })
+
+  onclick("download_species", function(){
+    toggle(id = "save_species")
+    toggleClass(id = "btn-species", class = "shadow")
+  })
+
+  # observeEvent(input$help_fixed_climate, {
+  onclick("help_fixed_climate", function(){
+    showModal(modalDialog(
+      title = "Somewhat important message",
+      "This is a somewhat important message.",
+      easyClose = TRUE,
+      footer = NULL
+    ))
+  })
+
 
   # observe({
   #   if (input$nav == "climate-change")

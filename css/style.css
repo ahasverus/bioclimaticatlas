@@ -158,17 +158,37 @@ div.radio {
   padding:       5px 10px;
   border:        1px solid #ccc;
   border-radius: 5px;
+  width:         150px;
 }
 
 .btn-png i {
   padding-right: 5px;
 }
 
+.space {
+  padding-left: 15px;
+}
+
 .btn-png:hover {
+  /* background-color: #1d67b8;
+  border:           1px solid #1d67b8;
+  color:            #eee; */
+  cursor: pointer;
+}
+
+.btn {
+  padding:       7px 10px;
+  border:        1px solid #ccc;
+  border-radius: 5px;
+  width:         150px;
+}
+
+.btn:hover {
   background-color: #1d67b8;
   border:           1px solid #1d67b8;
   color:            #eee;
 }
+
 
 
 /* COLOR PICKER ------------------------------ */
@@ -251,4 +271,58 @@ i.fa-caret-down {
 
 .shadow {
   box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.2), 0 0 0 0 rgba(0, 0, 0, 0.19);
+}
+
+
+/*  */
+
+#save_species {
+  margin-top: 20px;
+  display:    none;
+}
+
+label[for*="dpi"], label[htmlfor*="dpi"] {
+  color:     #555;
+  font-size: 14px;
+}
+
+input[type="checkbox"] + span {
+  color:     #555;
+  font-size: 14px;
+  font-weight: 700;
+  font-style: oblique;
+}
+
+.fa-info-circle {
+  cursor: pointer;
+}
+
+.fa-info-circle:hover {
+  color: #1d67b8;
+}
+
+.help-left {
+  width: 150px;
+  float: left;
+}
+
+.help-right {
+  width: 30px;
+  float: left;
+  text-align: left;
+  height: 46px;
+  padding: 11px 0;
+  vertical-align: middle;
+}
+
+hr {
+  clear: both;
+}
+
+h4.modal-title {
+  color: red;
+}
+
+.modal-header {
+  margin: 0 20px;
 }

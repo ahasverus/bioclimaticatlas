@@ -10,9 +10,9 @@ library(RColorBrewer)
 # setwd("~/Documents/bioclimaticatlas")
 
 
-data_species <- readRDS("data/species_list.rds")
-data_climate <- readRDS("data/variables_list.rds")
-grd          <- readRDS("data/grid.rds")
+data_species <- readRDS("data/infos/species_list.rds")
+data_climate <- readRDS("data/infos/variables_list.rds")
+grd          <- readRDS("data/background/grid.rds")
 
 
 
@@ -148,14 +148,37 @@ ui <- navbarPage(
           value   = ""
         ),
 
+        HTML("<div class=\"helper\">"),
+        HTML("<div class=\"help-left\">"),
+        checkboxInput("fixed_climate", "Fixed color scale", FALSE),
+        HTML("</div>"),
+        HTML("<div class=\"help-right\">"),
+        HTML("<i class=\"fa fa-info-circle\" id=\"help_fixed_climate\"></i>"),
+        HTML("</div>"),
+        HTML("</div>"),
+        # icon("info-circle", class = "help_fixed_climate"),
+        # actionButton("help_fixed_climate", icon("info-circle")),
+
         HTML(
           paste0(
             '<hr />',
             '<a href="#" id="btn-climate" class="btn-png">',
             '<i class="fa fa-download">',
             '</i>',
-            'Download as PNG',
+            'Download Map',
             '</a>'
+          )
+        ),
+
+        HTML(
+          paste0(
+            "<div id=save_climate>"
+          )
+        ),
+
+        HTML(
+          paste0(
+            "</div>"
           )
         )
       )
@@ -275,11 +298,42 @@ ui <- navbarPage(
         HTML(
           paste0(
             '<hr />',
-            '<a href="#" id="btn-species" class="btn-png">',
-            '<i class="fa fa-download">',
-            '</i>',
-            'Download as PNG',
-            '</a>'
+            '<div id="btn-species" class="btn-png">',
+            'Download Map',
+            '<span class="space"></span><i class="droit fa fa-caret-down"></i>',
+            '</div>'
+          )
+        ),
+
+        HTML(
+          paste0(
+            "<div id=save_species>"
+          )
+        ),
+
+        radioButtons(
+          inputId  = "format_species",
+          label    = "Output format:",
+          choices  = c("PNG", "JPEG", "TIFF", "PDF"),
+          selected = "PNG",
+          inline   = FALSE,
+          width    = 300
+        ),
+
+        # HTML(""),
+
+        textInput(
+          inputId = "dpi_species",
+          label   = "Resolution (dpi):",
+          value   = "300",
+          width   = 150
+        ),
+
+        downloadButton("download_species", "Download map"),
+
+        HTML(
+          paste0(
+            "</div>"
           )
         )
       )
