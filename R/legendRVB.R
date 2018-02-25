@@ -60,7 +60,7 @@ getLegend <- function(x, palette = "Spectral", reverse = TRUE, bins = 7){
   n      <- length(cuts)
   p      <- (cuts - rng[1])/(rng[2] - rng[1])
 
-  colors <- ramp(c(r[1], cuts, r[2]))
+  colors <- ramp(c(rng[1], cuts, rng[2]))
 
 
   # Create colors gradient for legend ------------------------------------------
