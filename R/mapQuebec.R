@@ -1,23 +1,6 @@
 mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE, bins = 7){
 
 
-  ### IMPORT LAYERS --------------------------------------------------------------
-
-  tundra     <- readRDS("data/background/eco-tundra.rds")
-  quebec     <- readRDS("data/background/quebec.rds")
-  noquebec   <- readRDS("data/background/noquebec.rds")
-  labrador   <- readRDS("data/background/labrador.rds")
-  nolabrador <- readRDS("data/background/nolabrador.rds")
-  nunavut    <- readRDS("data/background/nunavut.rds")
-  ontario    <- readRDS("data/background/ontario.rds")
-  study      <- readRDS("data/background/study.rds")
-  grille     <- readRDS("data/background/graticules.rds")
-  ocean      <- readRDS("data/background/ocean.rds")
-  water      <- readRDS("data/background/inland-water.rds")
-
-  narrow     <- readPNG("data/background/north-arrow.png")
-
-
   ### MAP PARAMETERS -----------------------------------------------------------
 
   light <- "#cccccc"
@@ -39,7 +22,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
 
   ### MAP EXTENT ---------------------------------------------------------------
 
-  plot(study,
+  plot(readRDS("data/background/study.rds"),
     xlim   = c(-80.50, -55.25),
     ylim   = c( 50.50,  63.50),
     axes   = FALSE,
@@ -68,47 +51,47 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
   ### ADD BACKGROUND LAYERS ----------------------------------------------------
 
   plot(
-    nunavut,
+    readRDS("data/background/nunavut.rds"),
     add = TRUE, col = light, border = "transparent"
   )
   plot(
-    ontario,
+    readRDS("data/background/ontario.rds"),
     add = TRUE, col = light, border = dark2
   )
   plot(
-    noquebec,
+    readRDS("data/background/noquebec.rds"),
     add = TRUE, col = light, border = dark2
   )
   plot(
-    nolabrador,
+    readRDS("data/background/nolabrador.rds"),
     add = TRUE, col = light, border = dark2
   )
   plot(
-    labrador,
+    readRDS("data/background/labrador.rds"),
     add = TRUE, col = "transparent", border = dark2
   )
   plot(
-    water,
+    readRDS("data/background/inland-water.rds"),
     add = TRUE, col = watin, border = watou
   )
   plot(
-    study,
+    readRDS("data/background/study.rds"),
     add = TRUE, col = "transparent", border = dark1
   )
   plot(
-    ocean,
+    readRDS("data/background/ocean.rds"),
     add = TRUE, col = watin, border = watou
   )
   plot(
-    grille,
+    readRDS("data/background/graticules.rds"),
     add = TRUE, col = watou
   )
   plot(
-    tundra,
+    readRDS("data/background/eco-tundra.rds"),
     add = TRUE, col = "transparent", border = "white", lwd = 3
   )
   plot(
-    tundra,
+    readRDS("data/background/eco-tundra.rds"),
     add = TRUE, col = "transparent", border = dark1, lwd = 1.75
   )
 
@@ -185,7 +168,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
   ### ADD NORTH ARROW ----------------------------------------------------------
 
   rasterImage(
-    image   = narrow,
+    image   = readPNG("data/background/north-arrow.png"),
     xleft   = -59.50,
     ybottom =  61.50,
     xright  = -56.00,
@@ -210,7 +193,6 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
   yctr <- ((ymax + ymin) / 2) + .1
   ywdt <- 1
 
-  # par(new = TRUE, mar = c(0.95, 0.975, 4.00, 0.975), xpd = TRUE)
   par(new = TRUE, mar = c(0.95, 1.70, 27.00, 1.70), xpd = TRUE)
 
   plot(0,
@@ -218,7 +200,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
     ylim = c(ymin, ymax),
     type = "n",
     axes = FALSE,
-    ann = FALSE
+    ann  = FALSE
   )
 
 
