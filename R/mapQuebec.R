@@ -30,7 +30,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
     border = "transparent"
   )
 
-  showNotification("Add study")
+  # showNotification("Add study")
 
 
 
@@ -42,7 +42,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
     crs    = "+init=epsg:4326"
   )
 
-  showNotification("Project raster")
+  # showNotification("Project raster")
 
   plotRVB(x,
     palette = palette,
@@ -50,7 +50,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
     add     = TRUE
   )
 
-  showNotification("Plot raster")
+  # showNotification("Plot raster")
 
 
   ### ADD BACKGROUND LAYERS ----------------------------------------------------
@@ -59,57 +59,57 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
     readRDS("data/background/nunavut.rds"),
     add = TRUE, col = light, border = "transparent"
   )
-  showNotification("Add nunavut")
+  # showNotification("Add nunavut")
   plot(
     readRDS("data/background/ontario.rds"),
     add = TRUE, col = light, border = dark2
   )
-  showNotification("Add Ontario")
+  # showNotification("Add Ontario")
   plot(
     readRDS("data/background/noquebec.rds"),
     add = TRUE, col = light, border = dark2
   )
-  showNotification("Add No Quebec")
+  # showNotification("Add No Quebec")
   plot(
     readRDS("data/background/nolabrador.rds"),
     add = TRUE, col = light, border = dark2
   )
-  showNotification("Add No Labrador")
+  # showNotification("Add No Labrador")
   plot(
     readRDS("data/background/labrador.rds"),
     add = TRUE, col = "transparent", border = dark2
   )
-  showNotification("Add Labrador")
+  # showNotification("Add Labrador")
   plot(
     readRDS("data/background/inland-water.rds"),
     add = TRUE, col = watin, border = watou
   )
-  showNotification("Add Inland Water")
+  # showNotification("Add Inland Water")
   plot(
     readRDS("data/background/study.rds"),
     add = TRUE, col = "transparent", border = dark1
   )
-  showNotification("Add Study")
+  # showNotification("Add Study")
   plot(
     readRDS("data/background/ocean.rds"),
     add = TRUE, col = watin, border = watou
   )
-  showNotification("Add Ocean")
+  # showNotification("Add Ocean")
   plot(
     readRDS("data/background/graticules.rds"),
     add = TRUE, col = watou
   )
-  showNotification("Add Graticules")
+  # showNotification("Add Graticules")
   plot(
     readRDS("data/background/eco-tundra.rds"),
     add = TRUE, col = "transparent", border = "white", lwd = 3
   )
-  showNotification("Add Tundra 1")
+  # showNotification("Add Tundra 1")
   plot(
     readRDS("data/background/eco-tundra.rds"),
     add = TRUE, col = "transparent", border = dark1, lwd = 1.75
   )
-  showNotification("Add Tundra 2")
+  # showNotification("Add Tundra 2")
 
 
   ### ADD TOPONYMY ITEMS -------------------------------------------------------
@@ -133,7 +133,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
   text(labels = "Gulf of St Lawrence",
     x = -60.55, y = 49.85, font = 3, col = watou, cex = 0.65
   )
-  showNotification("Add Text")
+  # showNotification("Add Text")
 
   ### ADD X-AXIS ---------------------------------------------------------------
 
@@ -156,7 +156,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
       tck       = -0.01
     )
   }
-  showNotification("Add x-Axes")
+  # showNotification("Add x-Axes")
 
 
   ### ADD Y-AXIS ---------------------------------------------------------------
@@ -178,7 +178,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
       tck       = -0.01
     )
   }
-  showNotification("Add y-Axes")
+  # showNotification("Add y-Axes")
 
   options(warn = 0)
 
@@ -193,7 +193,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
   #   ytop    =  63.50,
   #   col     = "red"
   # )
-  # showNotification("Add North Arrow")
+  # # showNotification("Add North Arrow")
 
   ### ADD MAP FRAME ------------------------------------------------------------
 
@@ -220,7 +220,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
     axes = FALSE,
     ann  = FALSE
   )
-  showNotification("Create Legend Plot")
+  # showNotification("Create Legend Plot")
 
 
   ### GET LEGEND CHARACTERISTICS -----------------------------------------------
@@ -232,7 +232,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
   colors  <- legende$colors
   ncolors <- length(colors)
 
-  showNotification("Compute Legend")
+  # showNotification("Compute Legend")
 
 
   ### ADD LEGEND COLORS --------------------------------------------------------
@@ -249,7 +249,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
       lwd     = 1
     )
   }
-  showNotification("Add Legend Colors")
+  # showNotification("Add Legend Colors")
 
 
   ### ADD LEGEND FRAME ---------------------------------------------------------
@@ -285,7 +285,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
     )
   }
 
-  showNotification("Add Legend labels")
+  # showNotification("Add Legend labels")
 
 
   ### ADD LEGEND TITLE ---------------------------------------------------------
