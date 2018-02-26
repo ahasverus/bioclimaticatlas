@@ -746,7 +746,8 @@ server <- function(input, output, session) {
     filename =  function() {
       # paste0("map-", vari, "-19812010-", dpi, "dpi.png")
       paste0(
-        "mymap",
+        "map-",
+        gsub("[[:punct:]]|[[:space:]]", "", Sys.time()),
         ".",
         tolower(type())
       )
@@ -924,7 +925,8 @@ server <- function(input, output, session) {
     filename =  function() {
       # paste0("map-", vari, "-19812010-", dpi, "dpi.png")
       paste0(
-        "mymap",
+        "map-",
+        gsub("[[:punct:]]|[[:space:]]", "", Sys.time()),
         ".",
         tolower(type())
       )
