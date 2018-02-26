@@ -10,8 +10,6 @@ library(png)
 library(RColorBrewer)
 
 
-# setwd("~/Documents/bioclimaticatlas")
-
 fls <- list.files(path = "R", pattern = "\\.R$", full.names = TRUE)
 tmp <- sapply(fls, source, .GlobalEnv)
 rm(list = c("fls", "tmp"))
@@ -20,23 +18,6 @@ rm(list = c("fls", "tmp"))
 data_species <- readRDS("data/infos/species_list.rds")
 data_climate <- readRDS("data/infos/variables_list.rds")
 grd          <- readRDS("data/background/grid.rds")
-
-
-### IMPORT LAYERS --------------------------------------------------------------
-
-tundra     <- readRDS("data/background/eco-tundra.rds")
-quebec     <- readRDS("data/background/quebec.rds")
-noquebec   <- readRDS("data/background/noquebec.rds")
-labrador   <- readRDS("data/background/labrador.rds")
-nolabrador <- readRDS("data/background/nolabrador.rds")
-nunavut    <- readRDS("data/background/nunavut.rds")
-ontario    <- readRDS("data/background/ontario.rds")
-study      <- readRDS("data/background/study.rds")
-grille     <- readRDS("data/background/graticules.rds")
-ocean      <- readRDS("data/background/ocean.rds")
-water      <- readRDS("data/background/inland-water.rds")
-
-narrow     <- readPNG("data/background/north-arrow.png")
 
 
 rampcolors <- data.frame(

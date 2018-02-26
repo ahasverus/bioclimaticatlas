@@ -10,12 +10,21 @@ library(png)
 library(RColorBrewer)
 
 
-# setwd("~/Documents/bioclimaticatlas")
+fls <- list.files(path = "R", pattern = "\\.R$", full.names = TRUE)
+tmp <- sapply(fls, source, .GlobalEnv)
+rm(list = c("fls", "tmp"))
 
 
 data_species <- readRDS("data/infos/species_list.rds")
 data_climate <- readRDS("data/infos/variables_list.rds")
 grd          <- readRDS("data/background/grid.rds")
+
+
+rampcolors <- data.frame(
+  palette          = rownames(brewer.pal.info),
+  maxcolors        = brewer.pal.info[ , "maxcolors"],
+  stringsAsFactors = FALSE
+)
 
 
 

@@ -1,6 +1,23 @@
 mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE, bins = 7){
 
 
+  ### IMPORT LAYERS --------------------------------------------------------------
+
+  tundra     <- readRDS("data/background/eco-tundra.rds")
+  quebec     <- readRDS("data/background/quebec.rds")
+  noquebec   <- readRDS("data/background/noquebec.rds")
+  labrador   <- readRDS("data/background/labrador.rds")
+  nolabrador <- readRDS("data/background/nolabrador.rds")
+  nunavut    <- readRDS("data/background/nunavut.rds")
+  ontario    <- readRDS("data/background/ontario.rds")
+  study      <- readRDS("data/background/study.rds")
+  grille     <- readRDS("data/background/graticules.rds")
+  ocean      <- readRDS("data/background/ocean.rds")
+  water      <- readRDS("data/background/inland-water.rds")
+
+  narrow     <- readPNG("data/background/north-arrow.png")
+
+
   ### MAP PARAMETERS -----------------------------------------------------------
 
   light <- "#cccccc"
