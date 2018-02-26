@@ -70,7 +70,7 @@ a:hover {
   color:           #555;
 }
 
-.fab {
+.fab, .fa-download {
   margin-right: 5px;
 }
 
@@ -170,9 +170,9 @@ div.radio {
 }
 
 .btn-png:hover {
-  /* background-color: #1d67b8;
+  background-color: #1d67b8;
   border:           1px solid #1d67b8;
-  color:            #eee; */
+  color:            #eee;
   cursor: pointer;
 }
 
@@ -276,9 +276,10 @@ i.fa-caret-down {
 
 /*  */
 
-#save_species {
+#save_species,
+#save_climate {
   margin-top: 20px;
-  display:    none;
+  /* display:    none; */
 }
 
 label[for*="dpi"], label[htmlfor*="dpi"] {
@@ -320,9 +321,37 @@ hr {
 }
 
 h4.modal-title {
-  color: red;
+  color: #555;
 }
 
 .modal-header {
+  text-align: center;
   margin: 0 20px;
+}
+
+.modal-body {
+  margin: 0 20px;
+  color: #555;
+}
+
+.fa-check {
+  color: #376e37;
+}
+
+.msg {
+  text-align: center;
+  margin: 0 20px;
+  color: #555;
+}
+
+.fa-check-circle {
+  color: #376e37;
+}
+
+.fa-times-circle {
+  color: #b20000;
+}
+
+.bouton {
+  text-align: center;
 }

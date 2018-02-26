@@ -37,14 +37,4 @@ $(document).ready(function() {
   var selclass = $("#color-sel_climate").attr("class");
   $("#color_climate").val(selclass);
 
-
-  // $('.help_fixed_climate').attr('id', 'help_fixed_climate');
-
-  // $('input[type="checkbox"]#fixed_climate + span').parent().after(' <span><i class="fa fa-info-circle" id="help_fixed_climate"></i></span>');
-  // $('label').after(' <i class="fa info-circle"></i>');
-  // span.html(span.html() + );
-  // span.html(span.html() + 'hhhhhhh');
-
-  // $("#fixed_climate span").text('Fixed color scale');
-  // <span></span>
 });
