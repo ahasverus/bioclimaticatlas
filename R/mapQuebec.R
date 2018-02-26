@@ -185,15 +185,15 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
 
   ### ADD NORTH ARROW ----------------------------------------------------------
 
-  rasterImage(
-    image   = readPNG("data/background/north-arrow.png"),
-    xleft   = -59.50,
-    ybottom =  61.50,
-    xright  = -56.00,
-    ytop    =  63.50,
-    col     = "red"
-  )
-  showNotification("Add North Arrow")
+  # rasterImage(
+  #   image   = readPNG("data/background/north-arrow.png"),
+  #   xleft   = -59.50,
+  #   ybottom =  61.50,
+  #   xright  = -56.00,
+  #   ytop    =  63.50,
+  #   col     = "red"
+  # )
+  # showNotification("Add North Arrow")
 
   ### ADD MAP FRAME ------------------------------------------------------------
 
