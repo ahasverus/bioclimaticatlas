@@ -10,15 +10,26 @@ library(png)
 library(RColorBrewer)
 
 
-fls <- list.files(path = "R", pattern = "\\.R$", full.names = TRUE)
+
+### LOAD ADDING FUNCTIONS ------------------------------------------------------
+
+fls <- list.files(
+  path       = "R",
+  pattern    = "\\.R$",
+  full.names = TRUE
+)
 tmp <- sapply(fls, source, .GlobalEnv)
 rm(list = c("fls", "tmp"))
 
+
+### LOAD DATASETS --------------------------------------------------------------
 
 data_species <- readRDS("data/infos/species_list.rds")
 data_climate <- readRDS("data/infos/variables_list.rds")
 grd          <- readRDS("data/background/grid.rds")
 
+
+### AVAILABLE RAMP COLORS ------------------------------------------------------
 
 rampcolors <- data.frame(
   palette          = rownames(brewer.pal.info),
@@ -40,7 +51,7 @@ CairoFonts(
 server <- function(input, output, session) {
 
 
-### BACKGROUND MAPS (ON APP OPENNING) -----------
+### BACKGROUND MAPS (ON APP OPENNING) ------------------------------------------
 
   for (i in c("map_species", "map_climate")) {
 
@@ -84,13 +95,14 @@ server <- function(input, output, session) {
   }
 
 
-  ### GET FORMS INPUT VALUES --------------------
+  ### CATCH SHINY INPUT VALUES -------------------------------------------------
 
   which_tab <- reactive({ input$nav })
   map_name  <- reactive({ gsub("tab_", "map_", which_tab()) })
   suffix    <- reactive({ gsub("tab_", "", which_tab()) })
 
-  data      <- reactive({
+  data <- reactive({
+
     if (suffix() %in% c("species", "climate")) {
       if (suffix() == "species") { data_species }
       if (suffix() == "climate") { data_climate }
@@ -99,7 +111,8 @@ server <- function(input, output, session) {
     }
   })
 
-  langue    <- reactive({
+  langue <- reactive({
+
     if (suffix() %in% c("species", "climate")) {
       input[[paste0("language_", suffix())]]
     } else {
@@ -107,7 +120,8 @@ server <- function(input, output, session) {
     }
   })
 
-  spclass   <- reactive({
+  spclass <- reactive({
+
     if (suffix() == "species") {
       input[[paste0("class_", suffix())]]
     } else {
@@ -115,9 +129,8 @@ server <- function(input, output, session) {
     }
   })
 
-  # observe({showNotification(paste0('"', spclass(), '"'))})
+  var_list <- reactive({
 
-  var_list     <- reactive({
     if (suffix() %in% c("species", "climate")) {
       if (suffix() == "species") {
         c("Select a species"  = "", sort(as.character(data_species[which(data_species[ , "class"] == spclass()), langue()])))
@@ -130,7 +143,7 @@ server <- function(input, output, session) {
   })
 
 
-  var_selected  <- reactive({
+  var_selected <- reactive({
 
     if (suffix() %in% c("species", "climate")) {
 
@@ -195,7 +208,8 @@ server <- function(input, output, session) {
     }
   })
 
-  period       <- reactive({
+  period <- reactive({
+
     if (suffix() %in% c("species", "climate")) {
       input[[paste0("horizon_", suffix())]]
     } else {
@@ -203,7 +217,8 @@ server <- function(input, output, session) {
     }
   })
 
-  rcp          <- reactive({
+  rcp <- reactive({
+
     if (suffix() %in% c("species", "climate")) {
       if (period() == "1981-2010") {
         NULL
@@ -292,24 +307,13 @@ server <- function(input, output, session) {
     }
   })
 
-  couleur <- reactive({
-
-    input[[paste0("color_", suffix())]]
-  })
-
-  dpi <- reactive({
-
-    as.numeric(input[[paste0("dpi_", suffix())]])
-  })
-
-  type <- reactive({
-
-    input[[paste0("format_", suffix())]]
-  })
+  couleur <- reactive({ input[[paste0("color_", suffix())]] })
+  dpi     <- reactive({ as.numeric(input[[paste0("dpi_", suffix())]]) })
+  type    <- reactive({ input[[paste0("format_", suffix())]] })
 
 
 
-  ### DEFINE REACTIVE EXPRESSIONS FOR MAP -------
+  ### CREATE RASTER PATH -------------------------------------------------------
 
   raster_path <- reactive({
 
@@ -401,6 +405,9 @@ server <- function(input, output, session) {
     }
   })
 
+
+  ### LOAD RASTER --------------------------------------------------------------
+
   ras <- reactive({
 
     if (!is.null(var_selected())) {
@@ -413,6 +420,9 @@ server <- function(input, output, session) {
       NULL
     }
   })
+
+
+  ### CREATE COLOR PALETTE (based on data) -------------------------------------
 
   couleurs <- reactive({
 
@@ -441,14 +451,12 @@ server <- function(input, output, session) {
   })
 
 
-
-### UPDATE FORMS INPUT CHOICES ----------------
-
   observe({
 
     if (suffix() %in% c("species", "climate")) {
 
-      ### Update list of species / variables
+      ### UPDATE LIST OF SPECIES / VARIABLES -----------------------------------
+
       updateSelectInput(
         session  = session,
         inputId  = paste0("select_", suffix()),
@@ -459,7 +467,8 @@ server <- function(input, output, session) {
 
       if (period() == "1981-2010") {
 
-        ### Update RCP buttons
+        ### DISABLE RCP RADIO --------------------------------------------------
+
         shinyjs::disable(selector = "[type=radio][value='RCP4.5']")
         shinyjs::disable(selector = "[type=radio][value='RCP8.5']")
         shinyjs::runjs(paste0('$("#scenario_', suffix(), ' .shiny-options-group").css({"color": "#aaa"});'))
@@ -467,12 +476,17 @@ server <- function(input, output, session) {
         shinyjs::runjs('$("[type=radio][value=\'RCP4.5\']").prop("checked", false);')
         shinyjs::runjs('$("[type=radio][value=\'RCP8.5\']").prop("checked", false);')
 
-        ### Update INFORMATION button
+
+        ### ENABLE OBSERVATION RADIO -------------------------------------------
+
         if (suffix() == "species") {
           shinyjs::enable(selector = "[type=radio][value='Observations']")
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:first-child").css({"color": "#555"});'))
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:first-child label").css({"cursor": "pointer"});'))
         }
+
+
+        ### DISABLE ANOMALIES & UNCERTAINTIES ----------------------------------
 
         if (suffix() == "climate") {
           shinyjs::disable(selector = "[type=radio][value='Anomalies']")
@@ -489,7 +503,9 @@ server <- function(input, output, session) {
 
       if (period() != "1981-2010") {
 
-        ### Update RCP buttons
+
+        ### ENABLE RCP RADIO ---------------------------------------------------
+
         shinyjs::enable(selector = "[type=radio][value='RCP4.5']")
         shinyjs::enable(selector = "[type=radio][value='RCP8.5']")
         if (is.null(rcp())){
@@ -500,13 +516,18 @@ server <- function(input, output, session) {
         shinyjs::runjs(paste0('$("#scenario_', suffix(), ' .shiny-options-group").css("color", "#555");'))
         shinyjs::runjs(paste0('$("#scenario_', suffix(), ' .shiny-options-group label").css({"cursor": "pointer"});'))
 
-        ### Update INFORMATION button
+
+        ### DISABLE OBSERVATIONS RADIO -----------------------------------------
+
         if (suffix() == "species") {
           shinyjs::disable(selector = "[type=radio][value='Observations']")
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:first-child").css({"color": "#aaa"});'))
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:first-child label").css({"cursor": "not-allowed"});'))
           updateRadioButtons(session, inputId = paste0("infos_", suffix()), selected = information())
         }
+
+
+        ### ENABLE ANOMALIES & UNCERTAINTIES -----------------------------------
 
         if (suffix() == "climate") {
           shinyjs::enable(selector = "[type=radio][value='Anomalies']")
@@ -517,6 +538,9 @@ server <- function(input, output, session) {
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(3) label").css({"cursor": "pointer"});'))
         }
       }
+
+
+      ### ENABLE / DISABLE DPI OPTION ------------------------------------------
 
       if (!is.null(type())) {
         if (type() == "PDF") {
@@ -529,7 +553,7 @@ server <- function(input, output, session) {
   })
 
 
-### UPDATE SPECIES MAP ------------------------
+### UPDATE / RESET MAP(S) --------------------------------------------------------
 
   observe({
 
@@ -537,7 +561,9 @@ server <- function(input, output, session) {
 
       if (!is.null(var_selected())) {
 
-        ### Update map
+
+        ### UPDATE MAP ---------------------------------------------------------
+
         leafletProxy(
           mapId = paste0("map_", suffix()),
           data  = grd) %>%
@@ -565,7 +591,9 @@ server <- function(input, output, session) {
           lat2 = ~ 62.50
         )
 
-        ### Add legend
+
+        ### ADD MAP LEGEND -----------------------------------------------------
+
         leafletProxy(mapId = paste0("map_", suffix())) %>%
         addLegend(
           position  = "bottomleft",
@@ -578,7 +606,9 @@ server <- function(input, output, session) {
 
       } else {
 
-        ### Reset map
+
+        ### RESET MAP ----------------------------------------------------------
+
         leafletProxy(
           mapId = paste0("map_", suffix()),
           data  = grd) %>%
@@ -604,37 +634,41 @@ server <- function(input, output, session) {
   })
 
 
-  onclick("nav", function() {
+  ### (USELESS ????) -----------------------------------------------------------
 
-    for (i in c("map_climate", "map_species")) {
+  # onclick("nav", function() {
+  #
+  #   for (i in c("map_climate", "map_species")) {
+  #
+  #     leafletProxy(
+  #       mapId = i,
+  #       data  = grd
+  #     ) %>%
+  #
+  #     addPolygons(
+  #       color       = "#8e501d",
+  #       weight      = 2,
+  #       opacity     = 1.0,
+  #       fillOpacity = 0,
+  #       fillColor   = "transparent"
+  #     ) %>%
+  #
+  #     fitBounds(
+  #       lng1 = ~-45.50,
+  #       lat1 = ~ 50.00,
+  #       lng2 = ~-75.50,
+  #       lat2 = ~ 63.00
+  #     )
+  #   }
+  # })
 
-      leafletProxy(
-        mapId = i,
-        data  = grd
-      ) %>%
 
-      addPolygons(
-        color       = "#8e501d",
-        weight      = 2,
-        opacity     = 1.0,
-        fillOpacity = 0,
-        fillColor   = "transparent"
-      ) %>%
+  ### HIDE COLOR PALETTES ON OPENNING ------------------------------------------
 
-      fitBounds(
-        lng1 = ~-45.50,
-        lat1 = ~ 50.00,
-        lng2 = ~-75.50,
-        lat2 = ~ 63.00
-      )
-    }
-  })
+  observe({ hide(id = paste0("color_", suffix())) })
 
 
-  observe({
-    hide(id = "color_species")
-    hide(id = "color_climate")
-  })
+  ### SHOW / HIDE COLOR PALETTES -----------------------------------------------
 
   onclick("grad_species", function(){
     toggle(id = "menu_species")
@@ -657,250 +691,60 @@ server <- function(input, output, session) {
   })
 
 
+  ### CLICK ON DOWNLOAD BUTTON (SPECIES) ---------------------------------------
+
   onclick("btn-species", function(){
 
-    showModal(
-      modalDialog(
 
-      title = "Download options",
+    ### SHOW DOWNLOAD PARAMETERS -----------------------------------------------
 
-      HTML("<div id=save_species>"),
+    if (!is.null(var_selected())) {
 
-      fluidRow(
+      showModal(
+        modalDialog(
 
-        column(6,
-          radioButtons(
-            inputId  = "format_species",
-            label    = "Output format:",
-            choices  = c("PNG", "JPEG", "TIFF", "PDF"),
-            selected = "PNG",
-            inline   = FALSE,
-            width    = 300
-          )
-        ),
+          title = "Download options",
 
-        column(6,
-          textInput(
-            inputId = "dpi_species",
-            label   = "Resolution (dpi):",
-            value   = "300",
-            width   = 150
-          )
-        )
-      ),
+          HTML("<div id=\"save_species\">"),
 
-      HTML("<div class=\"bouton\">"),
-      downloadButton("download_species", "Download map"),
-      HTML("<br /></div></div>"),
+          fluidRow(
 
-      easyClose = TRUE,
-      footer = NULL
-    ))
-  })
-
-  onclick("btn-climate", function(){
-
-    showModal(
-      modalDialog(
-
-      title = "Download options",
-
-      HTML("<div id=save_climate>"),
-
-      fluidRow(
-
-        column(6,
-          radioButtons(
-            inputId  = "format_climate",
-            label    = "Output format:",
-            choices  = c("PNG", "JPEG", "TIFF", "PDF"),
-            selected = "PNG",
-            inline   = FALSE,
-            width    = 300
-          )
-        ),
-
-        column(6,
-          textInput(
-            inputId = "dpi_climate",
-            label   = "Resolution (dpi):",
-            value   = "300",
-            width   = 150
-          )
-        )
-      ),
-
-      HTML("<div class=\"bouton\">"),
-      downloadButton("download_climate", "Download map"),
-      HTML("<br /></div></div>"),
-
-      easyClose = TRUE,
-      footer = NULL
-    ))
-  })
-
-
-
-  output$download_species <- downloadHandler(
-
-    filename =  function() {
-      # paste0("map-", vari, "-19812010-", dpi, "dpi.png")
-      paste0(
-        "map-",
-        gsub("[[:punct:]]|[[:space:]]", "", Sys.time()),
-        ".",
-        tolower(type())
-      )
-    },
-
-    content  = function(file) {
-
-      if (!is.null(var_selected())) {
-
-
-        ### MESSAGE DURING MAP PREPARATION ---------------------------------------
-
-        showModal(
-          modalDialog(
-            title = "Message",
-            HTML(
-              paste0(
-                "<div class=\"msg\">",
-                "Your map is being prepared.",
-                "<br />",
-                "Please wait a few seconds...",
-                "<br /><br />",
-                "<i class=\"fas fa-spinner faa-spin animated fa-4x\"></i>",
-                "<br /><br />",
-                "</div>"
+            column(6,
+              radioButtons(
+                inputId  = "format_species",
+                label    = "Output format:",
+                choices  = c("PNG", "JPEG", "TIFF", "PDF"),
+                selected = "PNG",
+                inline   = FALSE
               )
             ),
-            easyClose = FALSE,
-            footer = NULL
-          )
-        )
 
-
-        ### DEVISE INITIALISATION ----------------------------------------------
-
-        if (type() == "PNG") {
-          CairoPNG(
-            filename  = file,
-            width     = 5.00 * 1.2,
-            height    = 5.80 * 1.2,
-            pointsize = 14,
-            bg        = "transparent",
-            units     = "in",
-            res       = dpi()
-          )
-        }
-
-        if (type() == "JPEG") {
-          CairoJPEG(
-            filename  = file,
-            width     = 5.00 * 1.2,
-            height    = 5.80 * 1.2,
-            pointsize = 14,
-            bg        = "transparent",
-            units     = "in",
-            res       = dpi()
-          )
-        }
-
-        if (type() == "TIFF") {
-          CairoTIFF(
-            filename  = file,
-            width     = 5.00 * 1.2,
-            height    = 5.80 * 1.2,
-            pointsize = 14,
-            bg        = "transparent",
-            units     = "in",
-            res       = dpi()
-          )
-        }
-
-        if (type() == "PDF") {
-          CairoPDF(
-            file      = file,
-            width     = 5.00 * 1.2,
-            height    = 5.80 * 1.2,
-            pointsize = 14,
-            bg        = "transparent"
-          )
-        }
-
-        ### MAP INFORMATIONS ---------------------------------------------------
-
-        pos <- which(
-          data_species[ , "common_en"] == var_selected() |
-          data_species[ , "common_fr"] == var_selected() |
-          data_species[ , "latin"]     == var_selected() |
-          data_species[ , "inuktitut"] == var_selected()
-        )
-        var_english <- as.character(data_species[pos, "common_en"])
-
-        titre <- paste0(
-          var_english,
-          " ",
-          period(),
-          ifelse(!is.null(rcp()), paste0(" [", rcp(), "]"), ""),
-          ifelse(information() == "Observations", " (Observations)", ifelse(information() == "Uncertainties", " (Uncertainties)", ""))
-        )
-
-        if (period() == "1981-2010") {
-          if (spclass() == "Aves") {
-            datasource <- "BirdLife International & NatureServe"
-          } else {
-            datasource <- "IUCN"
-          }
-        } else {
-          datasource <- NULL
-        }
-
-
-        ### MAP PRODUCTION -----------------------------------------------------
-
-        mapQuebec(
-          x          = ras(),
-          title      = titre,
-          datasource = datasource,
-          palette    = gsub("-rev", "", couleur()),
-          reverse    = ifelse(length(grep("-rev", couleur())) == 1, TRUE, FALSE),
-          bins       = 7
-        )
-
-
-        ### DEVISE CLOSING -----------------------------------------------------
-
-        dev.off()
-
-
-        ### SUCESS MESSAGE -----------------------------------------------------
-
-        removeModal()
-
-        showModal(modalDialog(
-          title = "Congratulations!",
-          HTML(
-            paste0(
-              "<div class=\"msg\">",
-              "Your map has been downloaded.",
-              "<br /><br />",
-              "<i class=\"fas fa-check-circle fa-4x\"></i>",
-              "<br /><br />",
-              "</div>"
+            column(6,
+              selectInput(
+                inputId  = "dpi_species",
+                label    = "Resolution (dpi):",
+                choices  = c(72, 96, 150, 300, 600, 900),
+                selected = 300,
+                width    = 150
+              )
             )
           ),
+
+          HTML("<div class=\"bouton\">"),
+          downloadButton("download_species", "Download map"),
+          HTML("<br /></div></div>"),
+
           easyClose = TRUE,
-          footer = NULL
-        ))
+          footer    = NULL
+        )
+      )
+    } else {
 
-      } else {
 
+      ### ERROR MESSAGE (no species selected) ----------------------------------
 
-        ### ERROR MESSAGE ------------------------------------------------------
-
-        showModal(modalDialog(
+      showModal(
+        modalDialog(
           title = "Warning!",
           HTML(
             paste0(
@@ -913,17 +757,97 @@ server <- function(input, output, session) {
             )
           ),
           easyClose = TRUE,
-          footer = NULL
-        ))
-      }
+          footer    = NULL
+        )
+      )
     }
-  )
+  })
 
 
-  output$download_climate <- downloadHandler(
+  ### CLICK ON DOWNLOAD BUTTON (CLIMATE) ---------------------------------------
+
+  onclick("btn-climate", function(){
+
+
+    ### SHOW DOWNLOAD PARAMETERS -----------------------------------------------
+
+    if (!is.null(var_selected())) {
+
+      showModal(
+        modalDialog(
+
+          title = "Download options",
+
+          HTML("<div id=\"save_climate\">"),
+
+          fluidRow(
+
+            column(6,
+              radioButtons(
+                inputId  = "format_climate",
+                label    = "Output format:",
+                choices  = c("PNG", "JPEG", "TIFF", "PDF"),
+                selected = "PNG",
+                inline   = FALSE
+              )
+            ),
+
+            column(6,
+              selectInput(
+                inputId  = "dpi_climate",
+                label    = "Resolution (dpi):",
+                choices  = c(72, 96, 150, 300, 600, 900),
+                selected = 300,
+                width    = 150
+              )
+            )
+          ),
+
+          HTML("<div class=\"bouton\">"),
+          downloadButton("download_climate", "Download map"),
+          HTML("<br /></div></div>"),
+
+          easyClose = TRUE,
+          footer    = NULL
+        )
+      )
+    } else {
+
+
+      ### ERROR MESSAGE (no variable selected) ---------------------------------
+
+      showModal(
+        modalDialog(
+
+          title = "Warning!",
+
+          HTML(
+            paste0(
+              "<div class=\"msg\">",
+              "Please select a variable.",
+              "<br /><br />",
+              "<i class=\"fas fa-times-circle fa-4x\"></i>",
+              "<br /><br />",
+              "</div>"
+            )
+          ),
+          easyClose = TRUE,
+          footer    = NULL
+        )
+      )
+    }
+  })
+
+
+  ### CLICK ON POPUP DOWNLOAD BUTTON (SPECIES) ---------------------------------
+
+  output$download_species <- downloadHandler(
 
     filename =  function() {
-      # paste0("map-", vari, "-19812010-", dpi, "dpi.png")
+
+
+      ### EXPORTED MAP NAME ----------------------------------------------------
+
       paste0(
         "map-",
         gsub("[[:punct:]]|[[:space:]]", "", Sys.time()),
@@ -934,120 +858,301 @@ server <- function(input, output, session) {
 
     content  = function(file) {
 
-      if (!is.null(var_selected())) {
 
+      ### MESSAGE DURING MAP PREPARATION ---------------------------------------
 
-        ### MESSAGE DURING MAP PREPARATION ---------------------------------------
+      showModal(
+        modalDialog(
 
-        showModal(
-          modalDialog(
-            title = "Message",
-            HTML(
-              paste0(
-                "<div class=\"msg\">",
-                "Your map is being prepared.",
-                "<br />",
-                "Please wait a few seconds...",
-                "<br /><br />",
-                "<i class=\"fas fa-spinner faa-spin animated fa-4x\"></i>",
-                "<br /><br />",
-                "</div>"
-              )
-            ),
-            easyClose = FALSE,
-            footer = NULL
-          )
+          title = "Message",
+
+          HTML(
+            paste0(
+              "<div class=\"msg\">",
+              "Your map is being prepared.",
+              "<br />",
+              "Please wait a few seconds...",
+              "<br /><br />",
+              "<i class=\"fas fa-spinner faa-spin animated fa-4x\"></i>",
+              "<br /><br />",
+              "</div>"
+            )
+          ),
+          easyClose = FALSE,
+          footer    = NULL
         )
+      )
 
 
-        ### DEVISE INITIALISATION ----------------------------------------------
+      ### DEVISE INITIALISATION ------------------------------------------------
 
-        if (type() == "PNG") {
-          CairoPNG(
-            filename  = file,
-            width     = 5.00 * 1.2,
-            height    = 5.80 * 1.2,
-            pointsize = 14,
-            bg        = "transparent",
-            units     = "in",
-            res       = dpi()
-          )
-        }
-
-        if (type() == "JPEG") {
-          CairoJPEG(
-            filename  = file,
-            width     = 5.00 * 1.2,
-            height    = 5.80 * 1.2,
-            pointsize = 14,
-            bg        = "transparent",
-            units     = "in",
-            res       = dpi()
-          )
-        }
-
-        if (type() == "TIFF") {
-          CairoTIFF(
-            filename  = file,
-            width     = 5.00 * 1.2,
-            height    = 5.80 * 1.2,
-            pointsize = 14,
-            bg        = "transparent",
-            units     = "in",
-            res       = dpi()
-          )
-        }
-
-        if (type() == "PDF") {
-          CairoPDF(
-            file      = file,
-            width     = 5.00 * 1.2,
-            height    = 5.80 * 1.2,
-            pointsize = 14,
-            bg        = "transparent"
-          )
-        }
-
-
-        ### MAP INFORMATIONS ---------------------------------------------------
-
-        titre <- paste0(
-          var_english(),
-          ifelse(!is.null(var_units()), paste0(" (in ", var_units(), ") "), " "),
-          period(),
-          ifelse(!is.null(rcp()), paste0(" [", rcp(), "]"), ""),
-          ifelse(information() == "Anomalies", " (Anomalies)", ifelse(information() == "Uncertainties", " (Uncertainties)", ""))
+      if (type() == "PNG") {
+        CairoPNG(
+          filename  = file,
+          width     = 5.00 * 1.2,
+          height    = 5.80 * 1.2,
+          pointsize = 14,
+          bg        = "transparent",
+          units     = "in",
+          res       = dpi()
         )
+      }
 
-        if (period() == "1981-2010") {
-          datasource <- "NCEP-CFSR Reanalysis"
+      if (type() == "JPEG") {
+        CairoJPEG(
+          filename  = file,
+          width     = 5.00 * 1.2,
+          height    = 5.80 * 1.2,
+          pointsize = 14,
+          bg        = "transparent",
+          units     = "in",
+          res       = dpi()
+        )
+      }
+
+      if (type() == "TIFF") {
+        CairoTIFF(
+          filename  = file,
+          width     = 5.00 * 1.2,
+          height    = 5.80 * 1.2,
+          pointsize = 14,
+          bg        = "transparent",
+          units     = "in",
+          res       = dpi()
+        )
+      }
+
+      if (type() == "PDF") {
+        CairoPDF(
+          file      = file,
+          width     = 5.00 * 1.2,
+          height    = 5.80 * 1.2,
+          pointsize = 14,
+          bg        = "transparent"
+        )
+      }
+
+
+      ### MAP INFORMATIONS -----------------------------------------------------
+
+      pos <- which(
+        data_species[ , "common_en"] == var_selected() |
+        data_species[ , "common_fr"] == var_selected() |
+        data_species[ , "latin"]     == var_selected() |
+        data_species[ , "inuktitut"] == var_selected()
+      )
+
+      var_english <- as.character(data_species[pos, "common_en"])
+
+
+      titre <- paste0(
+        var_english,
+        " ",
+        period(),
+        ifelse(!is.null(rcp()), paste0(" [", rcp(), "]"), ""),
+        ifelse(information() == "Observations", " (Observations)", ifelse(information() == "Uncertainties", " (Uncertainties)", ""))
+      )
+
+
+      if (period() == "1981-2010") {
+
+        if (spclass() == "Aves") {
+
+          datasource <- "BirdLife International & NatureServe"
+
         } else {
-          datasource <- "CORDEX/Ouranos"
+
+          datasource <- "IUCN"
         }
 
+      } else {
 
-        ### MAP PRODUCTION -----------------------------------------------------
+        datasource <- NULL
+      }
 
-        mapQuebec(
-          x          = ras(),
-          title      = titre,
-          datasource = datasource,
-          palette    = gsub("-rev", "", couleur()),
-          reverse    = ifelse(length(grep("-rev", couleur())) == 1, TRUE, FALSE),
-          bins       = 7
+
+      ### MAP PRODUCTION -------------------------------------------------------
+
+      mapQuebec(
+        x          = ras(),
+        title      = titre,
+        datasource = datasource,
+        palette    = gsub("-rev", "", couleur()),
+        reverse    = ifelse(length(grep("-rev", couleur())) == 1, TRUE, FALSE),
+        bins       = 7
+      )
+
+
+      ### DEVISE CLOSING -------------------------------------------------------
+
+      dev.off()
+
+
+      ### SUCCESS MESSAGE ------------------------------------------------------
+
+      removeModal()
+
+      showModal(
+        modalDialog(
+
+          title = "Congratulations!",
+
+          HTML(
+            paste0(
+              "<div class=\"msg\">",
+              "Your map has been downloaded.",
+              "<br /><br />",
+              "<i class=\"fas fa-check-circle fa-4x\"></i>",
+              "<br /><br />",
+              "</div>"
+            )
+          ),
+          easyClose = TRUE,
+          footer    = NULL
         )
+      )
+    }
+  )
 
 
-        ### DEVISE CLOSING -----------------------------------------------------
+  ### CLICK ON POPUP DOWNLOAD BUTTON (CLIMATE) ---------------------------------
 
-        dev.off()
+  output$download_climate <- downloadHandler(
+
+    filename =  function() {
 
 
-        ### SUCESS MESSAGE -----------------------------------------------------
+      ### EXPORTED MAP NAME ----------------------------------------------------
 
-        removeModal()
+      paste0(
+        "map-",
+        gsub("[[:punct:]]|[[:space:]]", "", Sys.time()),
+        ".",
+        tolower(type())
+      )
+    },
 
-        showModal(modalDialog(
+    content  = function(file) {
+
+
+      ### MESSAGE DURING MAP PREPARATION ---------------------------------------
+
+      showModal(
+        modalDialog(
+
+          title = "Message",
+
+          HTML(
+            paste0(
+              "<div class=\"msg\">",
+              "Your map is being prepared.",
+              "<br />",
+              "Please wait a few seconds...",
+              "<br /><br />",
+              "<i class=\"fas fa-spinner faa-spin animated fa-4x\"></i>",
+              "<br /><br />",
+              "</div>"
+            )
+          ),
+          easyClose = FALSE,
+          footer    = NULL
+        )
+      )
+
+
+      ### DEVISE INITIALISATION ------------------------------------------------
+
+      if (type() == "PNG") {
+        CairoPNG(
+          filename  = file,
+          width     = 5.00 * 1.2,
+          height    = 5.80 * 1.2,
+          pointsize = 14,
+          bg        = "transparent",
+          units     = "in",
+          res       = dpi()
+        )
+      }
+
+      if (type() == "JPEG") {
+        CairoJPEG(
+          filename  = file,
+          width     = 5.00 * 1.2,
+          height    = 5.80 * 1.2,
+          pointsize = 14,
+          bg        = "transparent",
+          units     = "in",
+          res       = dpi()
+        )
+      }
+
+      if (type() == "TIFF") {
+        CairoTIFF(
+          filename  = file,
+          width     = 5.00 * 1.2,
+          height    = 5.80 * 1.2,
+          pointsize = 14,
+          bg        = "transparent",
+          units     = "in",
+          res       = dpi()
+        )
+      }
+
+      if (type() == "PDF") {
+        CairoPDF(
+          file      = file,
+          width     = 5.00 * 1.2,
+          height    = 5.80 * 1.2,
+          pointsize = 14,
+          bg        = "transparent"
+        )
+      }
+
+
+      ### MAP INFORMATIONS -----------------------------------------------------
+
+      titre <- paste0(
+        var_english(),
+        ifelse(!is.null(var_units()), paste0(" (in ", var_units(), ") "), " "),
+        period(),
+        ifelse(!is.null(rcp()), paste0(" [", rcp(), "]"), ""),
+        ifelse(information() == "Anomalies", " (Anomalies)", ifelse(information() == "Uncertainties", " (Uncertainties)", ""))
+      )
+
+      if (period() == "1981-2010") {
+
+        datasource <- "NCEP-CFSR Reanalysis"
+
+      } else {
+
+        datasource <- "CORDEX/Ouranos"
+      }
+
+
+      ### MAP PRODUCTION -------------------------------------------------------
+
+      mapQuebec(
+        x          = ras(),
+        title      = titre,
+        datasource = datasource,
+        palette    = gsub("-rev", "", couleur()),
+        reverse    = ifelse(length(grep("-rev", couleur())) == 1, TRUE, FALSE),
+        bins       = 7
+      )
+
+
+      ### DEVISE CLOSING -------------------------------------------------------
+
+      dev.off()
+
+
+      ### SUCCESS MESSAGE ------------------------------------------------------
+
+      removeModal()
+
+      showModal(
+        modalDialog(
+
           title = "Congratulations!",
           HTML(
             paste0(
@@ -1060,36 +1165,9 @@ server <- function(input, output, session) {
             )
           ),
           easyClose = TRUE,
-          footer = NULL
-        ))
-
-      } else {
-
-
-        ### ERROR MESSAGE ------------------------------------------------------
-
-        showModal(modalDialog(
-          title = "Warning!",
-          HTML(
-            paste0(
-              "<div class=\"msg\">",
-              "Please select a variable.",
-              "<br /><br />",
-              "<i class=\"fas fa-times-circle fa-4x\"></i>",
-              "<br /><br />",
-              "</div>"
-            )
-          ),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-      }
+          footer    = NULL
+        )
+      )
     }
   )
-
-
-  # observe({
-  #   if (input$nav == "climate-change")
-  #     showNotification(input$nav)
-  # })
 }
