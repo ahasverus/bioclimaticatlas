@@ -296,7 +296,7 @@ server <- function(input, output, session) {
           input[[paste0("infos_", suffix())]]
         }
       } else {
-        if (period() == "1981-2010" && input[[paste0("infos_", suffix())]] %in% c("Anomalies", "Uncertainties")){
+        if (period() == "1981-2010" && input[[paste0("infos_", suffix())]] %in% c("Anomalies", "uncertainties_climate")){
           "Climate normals"
         } else {
           input[[paste0("infos_", suffix())]]
@@ -372,7 +372,7 @@ server <- function(input, output, session) {
                 information() == "Climate normals",
                 "mean",
                 ifelse(
-                  information() == "Uncertainties",
+                  information() == "uncertainties_climate",
                   "sd",
                   "diff"
                 )
@@ -391,7 +391,7 @@ server <- function(input, output, session) {
                 information() == "Climate normals",
                 "mean",
                 ifelse(
-                  information() == "Uncertainties",
+                  information() == "uncertainties_climate",
                   "sd",
                   "diff"
                 )
@@ -490,13 +490,13 @@ server <- function(input, output, session) {
 
         if (suffix() == "climate") {
           shinyjs::disable(selector = "[type=radio][value='Anomalies']")
-          shinyjs::disable(selector = "[type=radio][value='Uncertainties']")
+          shinyjs::disable(selector = "[type=radio][value='uncertainties_climate']")
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(2)").css({"color": "#aaa"});'))
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(2) label").css({"cursor": "not-allowed"});'))
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(3)").css({"color": "#aaa"});'))
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(3) label").css({"cursor": "not-allowed"});'))
           shinyjs::runjs('$("[type=radio][value=\'Anomalies\']").prop("checked", false);')
-          shinyjs::runjs('$("[type=radio][value=\'Uncertainties\']").prop("checked", false);')
+          shinyjs::runjs('$("[type=radio][value=\'uncertainties_climate\']").prop("checked", false);')
           updateRadioButtons(session, inputId = paste0("infos_", suffix()), selected = information())
         }
       }
@@ -531,7 +531,7 @@ server <- function(input, output, session) {
 
         if (suffix() == "climate") {
           shinyjs::enable(selector = "[type=radio][value='Anomalies']")
-          shinyjs::enable(selector = "[type=radio][value='Uncertainties']")
+          shinyjs::enable(selector = "[type=radio][value='uncertainties_climate']")
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(2)").css({"color": "#555"});'))
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(2) label").css({"cursor": "pointer"});'))
           shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(3)").css({"color": "#555"});'))
@@ -688,6 +688,42 @@ server <- function(input, output, session) {
   onclick("menu_climate", function(){
     toggle(id = "menu_climate")
     toggleClass(id = "grad_climate", class = "shadow")
+  })
+
+
+  ### CLICK ON HELP BUTTON (SPECIES) -------------------------------------------
+
+  onclick("help-species", function(){
+
+    showModal(
+      modalDialog(
+
+        title = "Additional informations",
+
+        HTML("<p>Coming soon...</p>"),
+
+        easyClose = TRUE,
+        footer    = NULL
+      )
+    )
+  })
+
+
+  ### CLICK ON HELP BUTTON (CLIMATE) -------------------------------------------
+
+  onclick("help-climate", function(){
+
+    showModal(
+      modalDialog(
+
+        title = "Additional informations",
+
+        HTML("<p>Coming soon...</p>"),
+
+        easyClose = TRUE,
+        footer    = NULL
+      )
+    )
   })
 
 
@@ -1117,7 +1153,7 @@ server <- function(input, output, session) {
         ifelse(!is.null(var_units()), paste0(" (in ", var_units(), ") "), " "),
         period(),
         ifelse(!is.null(rcp()), paste0(" [", rcp(), "]"), ""),
-        ifelse(information() == "Anomalies", " (Anomalies)", ifelse(information() == "Uncertainties", " (Uncertainties)", ""))
+        ifelse(information() == "Anomalies", " (Anomalies)", ifelse(information() == "uncertainties_climate", " (Uncertainties)", ""))
       )
 
       if (period() == "1981-2010") {

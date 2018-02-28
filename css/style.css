@@ -154,11 +154,15 @@ div.radio {
 
 /* DOWNLOAD BUTTON --------------------------- */
 
+.buttons {
+  width: 298px;
+}
+
 .btn-png {
   padding:       5px 10px;
   border:        1px solid #ccc;
   border-radius: 5px;
-  width:         150px;
+  width:         125px;
 }
 
 .btn-png i {
@@ -173,14 +177,14 @@ div.radio {
   background-color: #1d67b8;
   border:           1px solid #1d67b8;
   color:            #eee;
-  cursor: pointer;
+  cursor:           pointer;
 }
 
 .btn {
   padding:       7px 10px;
   border:        1px solid #ccc;
   border-radius: 5px;
-  width:         150px;
+  /* width:         150px; */
 }
 
 .btn:hover {
@@ -295,12 +299,12 @@ input[type="checkbox"] + span {
 }
 
 .fa-info-circle {
-  cursor: pointer;
+  margin-right: 5px;
 }
 
-.fa-info-circle:hover {
+/* .fa-info-circle:hover {
   color: #1d67b8;
-}
+} */
 
 .help-left {
   width: 150px;
@@ -354,4 +358,16 @@ h4.modal-title {
 
 .bouton {
   text-align: center;
+}
+
+
+.btn-left {
+  width: 150px;
+  float: left;
+  margin-right: 20px;
+}
+
+.btn-right {
+  width: 128px;
+  float: left;
 }

@@ -135,7 +135,7 @@ ui <- navbarPage(
         radioButtons(
           inputId  = "infos_climate",
           label    = "Information to be displayed:",
-          choices  = c("Climate normals", "Uncertainties", "Anomalies"),
+          choices  = c("Climate normals", "Uncertainties" = "uncertainties_climate", "Anomalies"),
           selected = "Climate normals",
           inline   = FALSE,
           width    = 300
@@ -173,9 +173,15 @@ ui <- navbarPage(
         HTML(
           paste0(
             '<hr />',
-            '<div id="btn-climate" class="btn-png">',
+            '<div class="buttons">',
+            '<div id="btn-climate" class="btn-png btn-left">',
             '<i class="fa fa-download"></i>',
             'Download Map',
+            '</div>',
+            '<div id="help-climate" class="btn-png btn-right">',
+            '<i class="fa fa-info-circle"></i>',
+            'Help',
+            '</div>',
             '</div>'
           )
         )
@@ -258,7 +264,7 @@ ui <- navbarPage(
         radioButtons(
           inputId  = "infos_species",
           label    = "Information to be displayed:",
-          choices  = c("Observations", "Binaries", "Probabilities", "Uncertainties"),
+          choices  = c("Observations", "Binaries", "Probabilities", "Uncertainties" = "uncertainties_species"),
           selected = "Observations",
           inline   = FALSE,
           width    = 300
@@ -296,9 +302,15 @@ ui <- navbarPage(
         HTML(
           paste0(
             '<hr />',
-            '<div id="btn-species" class="btn-png">',
+            '<div class="buttons">',
+            '<div id="btn-species" class="btn-png btn-left">',
             '<i class="fa fa-download"></i>',
             'Download Map',
+            '</div>',
+            '<div id="help-species" class="btn-png btn-right">',
+            '<i class="fa fa-info-circle"></i>',
+            'Help',
+            '</div>',
             '</div>'
           )
         )
