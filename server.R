@@ -6,7 +6,6 @@ library(raster)
 library(rgdal)
 library(rgeos)
 library(Cairo)
-library(png)
 library(RColorBrewer)
 
 
@@ -47,6 +46,8 @@ CairoFonts(
   italic     = paste0(cairoFont, ":style=Italic"),
   bolditalic = paste0(cairoFont, ":style=Bold Italic,BoldItalic")
 )
+
+
 
 server <- function(input, output, session) {
 

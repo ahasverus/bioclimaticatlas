@@ -6,19 +6,29 @@ library(raster)
 library(rgdal)
 library(rgeos)
 library(Cairo)
-library(png)
 library(RColorBrewer)
 
 
-fls <- list.files(path = "R", pattern = "\\.R$", full.names = TRUE)
+
+### LOAD ADDING FUNCTIONS ------------------------------------------------------
+
+fls <- list.files(
+  path       = "R",
+  pattern    = "\\.R$",
+  full.names = TRUE
+)
 tmp <- sapply(fls, source, .GlobalEnv)
 rm(list = c("fls", "tmp"))
 
+
+### LOAD DATASETS --------------------------------------------------------------
 
 data_species <- readRDS("data/infos/species_list.rds")
 data_climate <- readRDS("data/infos/variables_list.rds")
 grd          <- readRDS("data/background/grid.rds")
 
+
+### AVAILABLE RAMP COLORS ------------------------------------------------------
 
 rampcolors <- data.frame(
   palette          = rownames(brewer.pal.info),
@@ -35,7 +45,7 @@ ui <- navbarPage(
   collapsible = TRUE,
 
 
-  ### HOME PANEL --------------------------------
+  ### HOME PANEL ---------------------------------------------------------------
 
   tabPanel(
 
@@ -46,7 +56,7 @@ ui <- navbarPage(
   ),
 
 
-  ### CLIMATE CHANGE PANEL ----------------------
+  ### CLIMATE CHANGE PANEL -----------------------------------------------------
 
   tabPanel(
 
@@ -67,7 +77,6 @@ ui <- navbarPage(
         ),
         includeCSS("css/font-awesome-animation.min.css"),
         includeScript("js/appscript.js")
-        # tags$script(src = "js/appscript.js")
       ),
 
       leafletOutput(
@@ -160,15 +169,6 @@ ui <- navbarPage(
           label   = "",
           value   = ""
         ),
-
-        # HTML("<div class=\"helper\">"),
-        # HTML("<div class=\"help-left\">"),
-        # checkboxInput("fixed_climate", "Fixed color scale", FALSE),
-        # HTML("</div>"),
-        # HTML("<div class=\"help-right\">"),
-        # HTML("<i class=\"fa fa-info-circle\" id=\"help_fixed_climate\"></i>"),
-        # HTML("</div>"),
-        # HTML("</div>"),
 
         HTML(
           paste0(
@@ -307,7 +307,7 @@ ui <- navbarPage(
   ),
 
 
-  ### ECOSYSTEM CHANGES PANEL -------------------
+  ### ECOSYSTEM CHANGES PANEL --------------------------------------------------
 
   tabPanel(
 
@@ -318,7 +318,7 @@ ui <- navbarPage(
   )
 
 
-  ### Get Code PANEL -------------------------
+  ### GET CODE PANEL -----------------------------------------------------------
 
-  # Add with jQuery
+  # Added with jQuery
 )
