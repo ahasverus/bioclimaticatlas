@@ -1,6 +1,9 @@
 mapQuebec <- function(x, title, type = NULL, datasource, palette = "Spectral", reverse = TRUE, bins = 7){
 
 
+  if (!is.null(type)) { if (type == 1) { type <- NULL } }
+
+
   ### MAP PARAMETERS -----------------------------------------------------------
 
   light <- "#cccccc"

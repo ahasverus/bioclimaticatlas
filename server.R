@@ -976,7 +976,7 @@ server <- function(input, output, session) {
       mapQuebec(
         x          = ras(),
         title      = titre,
-        type       = ifelse(suffix() == "species" & information() %in% c("Observations", "Binaries"), "binary", NULL),
+        type       = ifelse(suffix() == "species" & information() %in% c("Observations", "Binaries"), "binary", 1),
         datasource = datasource,
         palette    = gsub("-rev", "", couleur()),
         reverse    = ifelse(length(grep("-rev", couleur())) == 1, TRUE, FALSE),
@@ -1135,6 +1135,7 @@ server <- function(input, output, session) {
       mapQuebec(
         x          = ras(),
         title      = titre,
+        type       = NULL,
         datasource = datasource,
         palette    = gsub("-rev", "", couleur()),
         reverse    = ifelse(length(grep("-rev", couleur())) == 1, TRUE, FALSE),

@@ -77,7 +77,7 @@ plotRVB <- function(
 
       } else {
 
-        pal <- PAL[length(pal)] # Only Presence data (+ NA)
+        pal <- PAL[length(PAL)] # Only Presence data (+ NA)
       }
     }
   }
