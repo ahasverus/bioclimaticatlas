@@ -1,4 +1,4 @@
-mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE, bins = 7){
+mapQuebec <- function(x, title, type = NULL, datasource, palette = "Spectral", reverse = TRUE, bins = 7){
 
 
   ### MAP PARAMETERS -----------------------------------------------------------
@@ -30,9 +30,6 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
     border = "transparent"
   )
 
-  # showNotification("Add study")
-
-
 
   ### ADD RASTER ---------------------------------------------------------------
 
@@ -42,15 +39,12 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
     crs    = "+init=epsg:4326"
   )
 
-  # showNotification("Project raster")
-
-  plotRVB(x,
+  ccols <- plotRVB(x,
+    type    = type,
     palette = palette,
     reverse = reverse,
     add     = TRUE
   )
-
-  # showNotification("Plot raster")
 
 
   ### ADD BACKGROUND LAYERS ----------------------------------------------------
@@ -59,57 +53,56 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
     readRDS("data/background/nunavut.rds"),
     add = TRUE, col = light, border = "transparent"
   )
-  # showNotification("Add nunavut")
+
   plot(
     readRDS("data/background/ontario.rds"),
     add = TRUE, col = light, border = dark2
   )
-  # showNotification("Add Ontario")
+
   plot(
     readRDS("data/background/noquebec.rds"),
     add = TRUE, col = light, border = dark2
   )
-  # showNotification("Add No Quebec")
+
   plot(
     readRDS("data/background/nolabrador.rds"),
     add = TRUE, col = light, border = dark2
   )
-  # showNotification("Add No Labrador")
+
   plot(
     readRDS("data/background/labrador.rds"),
     add = TRUE, col = "transparent", border = dark2
   )
-  # showNotification("Add Labrador")
+
   plot(
     readRDS("data/background/inland-water.rds"),
     add = TRUE, col = watin, border = watou
   )
-  # showNotification("Add Inland Water")
+
   plot(
     readRDS("data/background/study.rds"),
     add = TRUE, col = "transparent", border = dark1
   )
-  # showNotification("Add Study")
+
   plot(
     readRDS("data/background/ocean.rds"),
     add = TRUE, col = watin, border = watou
   )
-  # showNotification("Add Ocean")
+
   plot(
     readRDS("data/background/graticules.rds"),
     add = TRUE, col = watou
   )
-  # showNotification("Add Graticules")
+
   plot(
     readRDS("data/background/eco-tundra.rds"),
     add = TRUE, col = "transparent", border = "white", lwd = 3
   )
-  # showNotification("Add Tundra 1")
+
   plot(
     readRDS("data/background/eco-tundra.rds"),
     add = TRUE, col = "transparent", border = dark1, lwd = 1.75
   )
-  # showNotification("Add Tundra 2")
 
 
   ### ADD TOPONYMY ITEMS -------------------------------------------------------
@@ -133,7 +126,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
   text(labels = "Gulf of St Lawrence",
     x = -60.55, y = 49.85, font = 3, col = watou, cex = 0.65
   )
-  # showNotification("Add Text")
+
 
   ### ADD X-AXIS ---------------------------------------------------------------
 
@@ -156,7 +149,6 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
       tck       = -0.01
     )
   }
-  # showNotification("Add x-Axes")
 
 
   ### ADD Y-AXIS ---------------------------------------------------------------
@@ -178,22 +170,9 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
       tck       = -0.01
     )
   }
-  # showNotification("Add y-Axes")
 
   options(warn = 0)
 
-
-  ### ADD NORTH ARROW ----------------------------------------------------------
-
-  # rasterImage(
-  #   image   = readPNG("data/background/north-arrow.png"),
-  #   xleft   = -59.50,
-  #   ybottom =  61.50,
-  #   xright  = -56.00,
-  #   ytop    =  63.50,
-  #   col     = "red"
-  # )
-  # # showNotification("Add North Arrow")
 
   ### ADD MAP FRAME ------------------------------------------------------------
 
@@ -220,72 +199,107 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
     axes = FALSE,
     ann  = FALSE
   )
-  # showNotification("Create Legend Plot")
 
 
-  ### GET LEGEND CHARACTERISTICS -----------------------------------------------
+  ### CLASSICAL LEGEND (CONTINUOUS DATA) ---------------------------------------
 
-  legende <- getLegend(x, palette = palette, reverse = reverse, bins = bins)
+  if (is.null(type)) {
 
-  p       <- legende$p
-  cuts    <- legende$cuts
-  colors  <- legende$colors
-  ncolors <- length(colors)
+    ### GET LEGEND CHARACTERISTICS -----------------------------------------------
 
-  # showNotification("Compute Legend")
+    legende <- getLegend(x, palette = palette, reverse = reverse, bins = bins)
+
+    p       <- legende$p
+    cuts    <- legende$cuts
+    colors  <- legende$colors
+    ncolors <- length(colors)
 
 
-  ### ADD LEGEND COLORS --------------------------------------------------------
+    ### ADD LEGEND COLORS --------------------------------------------------------
 
-  for (i in 1:ncolors) {
+    for (i in 1:ncolors) {
+      rect(
+        xleft   = xmin + xrng * ((i - 1) / ncolors),
+        xright  = xmin + xrng * (i / ncolors),
+        ytop    = yctr + ywdt / 2,
+        ybottom = yctr - ywdt / 2,
+        col     = colors[i],
+        border  = NA
+      )
+    }
+
+
+    ### ADD LEGEND FRAME ---------------------------------------------------------
+
     rect(
-      xleft   = xmin + xrng * ((i - 1) / ncolors),
-      xright  = xmin + xrng * (i / ncolors),
+      xleft   = xmin,
+      xright  = xmax,
       ytop    = yctr + ywdt / 2,
       ybottom = yctr - ywdt / 2,
-      col     = colors[i],
-      border  = NA,
-      lty     = 1,
-      lwd     = 1
+      col     = NA,
+      border  = dark1
     )
-  }
-  # showNotification("Add Legend Colors")
 
 
-  ### ADD LEGEND FRAME ---------------------------------------------------------
+    ### ADD LEGEND LABELS --------------------------------------------------------
 
-  rect(
-    xleft   = xmin,
-    xright  = xmax,
-    ytop    = yctr + ywdt / 2,
-    ybottom = yctr - ywdt / 2,
-    col     = NA,
-    border  = dark1,
-    lwd     = 1,
-    lty     = 1
-  )
+    for (i in 1:length(p)) {
+
+      lines(
+        x   = rep(xmin + xrng * p[i], 2),
+        y   = c(yctr - ywdt / 2, (yctr - ywdt / 2) - yrng * 0.10),
+        col = dark1
+      )
+      text(
+        x     = xmin + (2 * p[i]),
+        y     = (yctr - ywdt / 2) - yrng * 0.30,
+        label = format(cuts)[i],
+        col   = dark1,
+        cex   = 0.7
+      )
+    }
 
 
-  ### ADD LEGEND LABELS --------------------------------------------------------
+  ### SPECIAL LEGEND (BINARY DATA) ---------------------------------------------
 
-  for (i in 1:length(p)) {
+  } else {
 
-    lines(
-      x   = rep(xmin + xrng * p[i], 2),
-      y   = c(yctr - ywdt / 2, (yctr - ywdt / 2) - yrng * 0.10),
-      col = dark1
+    rect(
+      xleft   = -0.55,
+      ybottom = (yctr - 0.5) - ywdt / 2,
+      xright  = -0.45,
+      ytop    = (yctr - 0.5) + ywdt / 2,
+      col     = ccols[1],
+      border  = dark1
     )
     text(
-      x     = xmin + (2 * p[i]),
-      y     = (yctr - ywdt / 2) - yrng * 0.30,
-      label = format(cuts)[i],
+      x     = -0.45,
+      y     = (((yctr - 0.5) - ywdt / 2) + ((yctr - 0.5) + ywdt / 2)) / 2,
+      label = "Absence",
       col   = dark1,
-      cex   = .7,
-      font  = 1
+      cex   = 0.7,
+      pos   = 4,
+      font  = 2
+    )
+
+    rect(
+      xleft   = 0.15,
+      ybottom = (yctr - 0.5) - ywdt / 2,
+      xright  = 0.25,
+      ytop    = (yctr - 0.5) + ywdt / 2,
+      col     = ccols[2],
+      border  = dark1
+    )
+    text(
+      x     = 0.25,
+      y     = (((yctr - 0.5) - ywdt / 2) + ((yctr - 0.5) + ywdt / 2)) / 2,
+      label = "Presence",
+      col   = dark1,
+      cex   = 0.7,
+      pos   = 4,
+      font  = 2
     )
   }
-
-  # showNotification("Add Legend labels")
 
 
   ### ADD LEGEND TITLE ---------------------------------------------------------
@@ -323,6 +337,7 @@ mapQuebec <- function(x, title, datasource, palette = "Spectral", reverse = TRUE
       cex    = 0.55,
       pos    = 2
     )
+
   } else {
 
     text(

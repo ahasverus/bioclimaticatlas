@@ -235,7 +235,6 @@ server <- function(input, output, session) {
     }
   })
 
-
   var_english  <- reactive({
 
     if (!is.null(var_selected())) {
@@ -977,6 +976,7 @@ server <- function(input, output, session) {
       mapQuebec(
         x          = ras(),
         title      = titre,
+        type       = ifelse(suffix() == "species" & information() %in% c("Observations", "Binaries"), "binary", NULL),
         datasource = datasource,
         palette    = gsub("-rev", "", couleur()),
         reverse    = ifelse(length(grep("-rev", couleur())) == 1, TRUE, FALSE),

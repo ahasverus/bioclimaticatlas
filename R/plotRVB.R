@@ -1,6 +1,7 @@
 plotRVB <- function(
   x       = NULL,
   zlim    = NULL,
+  type    = NULL,
   palette = "Spectral",
   reverse = TRUE,
   alpha   = 255,
@@ -56,6 +57,32 @@ plotRVB <- function(
   if (reverse) pal <- pal[length(pal):1]
 
 
+  # Special case: Binary data --------------------------------------------------
+
+  if (!is.null(type)) {
+
+    PAL <- pal[c(3, length(pal)-2)]
+
+    unique_value <- unique(values(x))
+
+    if (length(unique_value) == 3) { # Presence & Absence data (+ NA)
+
+      pal <- PAL
+
+    } else {
+
+      if (0 %in% unique_value) { # Only Absence data (+ NA)
+
+        pal <- PAL[1]
+
+      } else {
+
+        pal <- PAL[length(pal)] # Only Presence data (+ NA)
+      }
+    }
+  }
+
+
   # Create colors gradient based on raster values ------------------------------
 
   hexa <- leaflet::colorNumeric(
@@ -95,4 +122,8 @@ plotRVB <- function(
     ylab    = ylab,
     add     = add
   )
+
+  if (!is.null(type)) {
+    PAL
+  }
 }
