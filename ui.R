@@ -181,7 +181,7 @@ ui <- navbarPage(
             '</div>',
             '<div id="help-climate" class="btn-png btn-right">',
             '<i class="fa fa-info-circle"></i>',
-            'Help',
+            'Informations',
             '</div>',
             '</div>'
           )
@@ -310,7 +310,7 @@ ui <- navbarPage(
             '</div>',
             '<div id="help-species" class="btn-png btn-right">',
             '<i class="fa fa-info-circle"></i>',
-            'Help',
+            'Informations',
             '</div>',
             '</div>'
           )

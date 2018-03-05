@@ -700,7 +700,7 @@ server <- function(input, output, session) {
 
         title = "Additional informations",
 
-        HTML("<p>Coming soon...</p>"),
+        includeHTML("includes/help-species.html"),
 
         easyClose = TRUE,
         footer    = NULL
@@ -718,7 +718,7 @@ server <- function(input, output, session) {
 
         title = "Additional informations",
 
-        HTML("<p>Coming soon...</p>"),
+        includeHTML("includes/help-climate.html"),
 
         easyClose = TRUE,
         footer    = NULL
