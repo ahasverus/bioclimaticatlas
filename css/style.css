@@ -5,6 +5,8 @@ body {
   margin:    0;
   padding:   0;
   font-size: 14px;
+  background-image: url("dust_scratches.png");
+	background-repeat: repeat;
 }
 
 
@@ -38,11 +40,12 @@ div.outer {
 }
 
 #nav li:last-of-type a {
-  color: #1d67b8;
+  /* color: #1d67b8; */
+  color: #30a7ab;
 }
 
 #nav li:last-of-type a:hover {
-  color: #0d2e52;
+  color: #126e71;
 }
 
 
@@ -274,7 +277,7 @@ i.fa-caret-down {
 }
 
 .shadow {
-  box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.2), 0 0 0 0 rgba(0, 0, 0, 0.19);
+  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2), 0 0 0 0 rgba(0, 0, 0, 0.19);
 }
 
 
@@ -370,4 +373,94 @@ h4.modal-title {
 .btn-right {
   width: 128px;
   float: left;
+}
+
+.home {
+  margin: 2% 10%;
+  /* background-color: white; */
+  padding: 2% 3%;
+  /* border: 1px solid #eee; */
+  /* border-radius: 4px; */
+}
+
+.home h2 {
+  color:      #666;
+  font-size:  20px;
+  /* font-weight: 700; */
+  margin: 0;
+  padding: 1.5% 0;
+  border-bottom: 1px solid #eee;
+}
+.paragraph {
+  padding: 2% 0;
+  font-size: 16px;
+  color:      #666;
+  line-height: 30px;
+}
+
+h2.h2home, h5.h2home {
+  margin: 1% 10%;
+  padding: 1% 0;
+  color:      #666;
+  text-align: center;
+}
+
+h2.h2home {
+  margin-top: 2%;
+}
+h5.h2home {
+  font-size:  18px;
+  font-weight: normal;
+  /* font-style: italic; */
+  padding: 0;
+}
+
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+    /* margin: 0 8%; */
+    width: 65%;
+    border-bottom: 1px solid #eee;
+}
+
+hr.style11 {
+	height: 6px;
+	background: url(http://ibrahimjabbari.com/english/images/hr-11.png) repeat-x 0 0;
+  border: 0;
+}
+
+.hhr {
+  margin: 0 10%;
+}
+
+a.contact {
+  color: #30a7ab;
+}
+
+a.contact:hover {
+  color: #126e71;
+  text-decoration: underline;
+}
+
+
+.pdf {
+  color: #2196a8;
+  /* border: 1px solid #2196a8; */
+  /* border-radius: 5px; */
+  padding: 2px 7px 2px 7px;
+  margin-right: 10px;
+  /* font-size: 14px; */
+}
+
+.pdf:hover, .pdf:focus {
+  color: white;
+  border: 1px solid #2196a8;
+  background-color: #2196a8;
+  border-radius: 5px;
+}
+
+li.refs {
+  font-size: 14px;
 }

@@ -52,7 +52,8 @@ ui <- navbarPage(
     title = icon("home"),
     value = "tab_home",
 
-    HTML("Coming soon...")
+    includeHTML("includes/home-page.html")
+    # HTML("<a href=\"berteaux-et-al-2018-a.pdf\">Link</a>")
   ),
 
 
