@@ -81,7 +81,8 @@ a:hover {
 /* LEAFLET MAP ------------------------------- */
 
 #map_climate,
-#map_species {
+#map_species,
+#map_ecosystem {
   margin:        0;
   margin:        0;
   border:        1px solid #ddd;
@@ -98,7 +99,8 @@ a:hover {
 /* FORM STYLE -------------------------------- */
 
 #panel_species,
-#panel_climate {
+#panel_climate,
+#panel_ecosystem {
   background-color: white;
   padding:          0 20px 20px 20px;
   cursor:           move;
@@ -108,7 +110,8 @@ a:hover {
 }
 
 #panel_species:hover,
-#panel_climate:hover {
+#panel_climate:hover,
+#panel_ecosystem:hover {
   opacity:          0.95;
   transition-delay: 0;
 }
@@ -119,7 +122,9 @@ label.control-label,
 #class_species,
 #select_species,
 #class_climate,
-#select_climate {
+#select_climate,
+#class_ecosystem,
+#select_ecosystem {
   color:     #555;
   font-size: 14px;
 }
@@ -201,7 +206,8 @@ div.radio {
 /* COLOR PICKER ------------------------------ */
 
 #menu_species,
-#menu_climate {
+#menu_climate,
+#menu_ecosystem {
   overflow:      scroll;
   height:        100px;
   display:       none;
@@ -212,7 +218,8 @@ div.radio {
 }
 
 #grad_species,
-#grad_climate {
+#grad_climate,
+#grad_ecosystem {
   border:        1px solid #cccccc;
   border-radius: 5px;
   padding:       0;
@@ -221,7 +228,8 @@ div.radio {
 }
 
 #color-sel_species,
-#color-sel_climate {
+#color-sel_climate,
+#color-sel_ecosystem {
   vertical-align: middle;
   margin:         5px;
   padding:        0;
@@ -244,7 +252,8 @@ div.radio {
 }
 
 #color-arrow_species,
-#color-arrow_climate {
+#color-arrow_climate,
+#color-arrow_ecosystem {
   float:        left;
   width:        8%;
   height:       25px;
@@ -262,17 +271,21 @@ i.fa-caret-down {
 #menu_species:hover,
 #grad_species:hover,
 #menu_climate:hover,
-#grad_climate:hover {
+#grad_climate:hover,
+#menu_ecosystem:hover,
+#grad_ecosystem:hover {
   cursor: pointer;
 }
 
 #menu_species > div:first-of-type,
-#menu_climate > div:first-of-type {
+#menu_climate > div:first-of-type,
+#menu_ecosystem > div:first-of-type {
   margin-top: 4px;
 }
 
 #menu_species > div:last-of-type,
-#menu_climate > div:last-of-type {
+#menu_climate > div:last-of-type,
+#menu_ecosystem > div:last-of-type {
   margin-bottom: 4px;
 }
 
@@ -284,7 +297,8 @@ i.fa-caret-down {
 /*  */
 
 #save_species,
-#save_climate {
+#save_climate,
+#save_ecosystem {
   margin-top: 20px;
   /* display:    none; */
 }
@@ -304,10 +318,6 @@ input[type="checkbox"] + span {
 .fa-info-circle {
   margin-right: 5px;
 }
-
-/* .fa-info-circle:hover {
-  color: #1d67b8;
-} */
 
 .help-left {
   width: 150px;
@@ -377,16 +387,12 @@ h4.modal-title {
 
 .home {
   margin: 2% 10%;
-  /* background-color: white; */
   padding: 2% 3%;
-  /* border: 1px solid #eee; */
-  /* border-radius: 4px; */
 }
 
 .home h2 {
   color:      #666;
   font-size:  20px;
-  /* font-weight: 700; */
   margin: 0;
   padding: 1.5% 0;
   border-bottom: 1px solid #eee;
@@ -411,7 +417,6 @@ h2.h2home {
 h5.h2home {
   font-size:  18px;
   font-weight: normal;
-  /* font-style: italic; */
   padding: 0;
 }
 
@@ -420,7 +425,6 @@ h5.h2home {
     margin-left: auto;
     margin-right: auto;
     width: 50%;
-    /* margin: 0 8%; */
     width: 65%;
     border-bottom: 1px solid #eee;
 }
@@ -447,11 +451,8 @@ a.contact:hover {
 
 .pdf {
   color: #2196a8;
-  /* border: 1px solid #2196a8; */
-  /* border-radius: 5px; */
   padding: 2px 7px 2px 7px;
   margin-right: 10px;
-  /* font-size: 14px; */
 }
 
 .pdf:hover, .pdf:focus {

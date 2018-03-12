@@ -28,6 +28,16 @@ $(document).ready(function() {
     Shiny.onInputChange("color_climate", selclass);
   });
 
+  $("#menu_ecosystem div").on("click", function() {
+    var selection = $(this).attr("class");
+    $("#color-sel_ecosystem").removeClass();
+    $("#color-sel_ecosystem").addClass(selection);
+    $("#color-sel_ecosystem").removeClass("color-list");
+    var selclass = $("#color-sel_ecosystem").attr("class");
+    $("#color_ecosystem").val(selclass);
+    Shiny.onInputChange("color_ecosystem", selclass);
+  });
+
 
   // Update selected color palette (on App opening)
 
@@ -36,5 +46,8 @@ $(document).ready(function() {
 
   var selclass = $("#color-sel_climate").attr("class");
   $("#color_climate").val(selclass);
+
+  var selclass = $("#color-sel_ecosystem").attr("class");
+  $("#color_ecosystem").val(selclass);
 
 });
