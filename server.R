@@ -23,12 +23,14 @@ rm(list = c("fls", "tmp"))
 
 ### LOAD DATASETS --------------------------------------------------------------
 
-data_species   <- readRDS("data/infos/species_list.rds")
-data_climate   <- readRDS("data/infos/variables_list.rds")
-data_ecosystem <- readRDS("data/infos/ecosystem_list.rds")
-data_network   <- readRDS("data/infos/network_list.rds")
-grd            <- readRDS("data/background/grid.rds")
-grd_tundra     <- readRDS("data/background/grid_tundra.rds")
+data_species       <- readRDS("data/infos/species_list.rds")
+data_climate       <- readRDS("data/infos/variables_list.rds")
+data_ecosystem     <- readRDS("data/infos/ecosystem_list.rds")
+data_network       <- readRDS("data/infos/network_list.rds")
+data_vulnerability <- data_network[which(data_network[ , "code"] == "Net01"), ]
+data_network       <- data_network[which(data_network[ , "code"] != "Net01"), ]
+grd                <- readRDS("data/background/grid.rds")
+grd_tundra         <- readRDS("data/background/grid_tundra.rds")
 
 
 ### AVAILABLE RAMP COLORS ------------------------------------------------------
@@ -55,22 +57,19 @@ CairoFonts(
 server <- function(input, output, session) {
 
 
-  ###
-  ### HIDE LIST OF COLOR PALETTES --------------------------------[[ ALL TABS ]]
-  ###
+
+  ### HIDE LIST OF COLOR PALETTES ----------------------------------------------
 
   observe({
 
-    for (i in c("climate", "species", "ecosystem")) {
+    for (i in c("climate", "species", "ecosystem", "network", "vulnerability")) {
 
       hide(id = paste0("color_", i))
     }
   })
 
 
-  ###
   ### CATCH SELECTED TAB  ------------------------------------------------------
-  ###
 
   suffix <- reactive({
 
@@ -84,9 +83,51 @@ server <- function(input, output, session) {
   })
 
 
-  ###
-  ### DEFINE STUDY AREA  -------------------------------------------------------
-  ###
+  ### SET APPROPRIATED DATASET  ------------------------------------------------
+
+  data <- reactive({
+
+    if (suffix() == "climate") {
+
+      data_climate
+
+    } else {
+
+      if (suffix() == "species") {
+
+        data_species
+
+      } else {
+
+        if (suffix() == "ecosystem") {
+
+          data_ecosystem
+
+        } else {
+
+          if (suffix() == "network") {
+
+            data_network
+
+          } else {
+
+            if (suffix() == "vulnerability") {
+
+              data_vulnerability
+
+            } else {
+
+              NULL
+            }
+          }
+        }
+      }
+    }
+  })
+
+
+
+  ### DEFINE LEAFLET STUDY AREA  -----------------------------------------------
 
   area <- reactive({
 
@@ -101,9 +142,7 @@ server <- function(input, output, session) {
   })
 
 
-  ###
-  ### DEFINE ZOOM LEVEL  -------------------------------------------------------
-  ###
+  ### DEFINE LEAFLET ZOOM LEVEL  -----------------------------------------------
 
   coords <- reactive({
 
@@ -118,13 +157,11 @@ server <- function(input, output, session) {
   })
 
 
-  ###
-  ### FIRST DISPLAY OF LEAFLET MAPS (ON APP OPENNING) ------------[[ ALL TABS ]]
-  ###
+  ### FIRST DISPLAY OF LEAFLET MAPS (ON APP OPENNING) --------------------------
 
-  for (i in c("map_species", "map_climate", "map_ecosystem")) {
+  for (map in c("map_species", "map_climate", "map_ecosystem", "map_network", "map_vulnerability")) {
 
-    output[[i]] <- renderLeaflet({
+    output[[map]] <- renderLeaflet({
 
       leaflet(
         data = area()
@@ -155,8 +192,8 @@ server <- function(input, output, session) {
           title   = "Zoom to study area",
           onClick = JS(
             paste0(
-              "function(btn, ", i, "){ ",
-              i, ".fitBounds(",
+              "function(btn, ", map, "){ ",
+              map, ".fitBounds(",
               "[[",
               coords()[2], ", ", coords()[3],
               "], [",
@@ -176,195 +213,353 @@ server <- function(input, output, session) {
   }
 
 
-  ### [[ CLIMATE TAB ]]--[[ CLIMATE TAB ]]--[[ CLIMATE TAB ]]--[[ CLIMATE TAB ]]
-  ### [[ CLIMATE TAB ]]--[[ CLIMATE TAB ]]--[[ CLIMATE TAB ]]--[[ CLIMATE TAB ]]
-  ### [[ CLIMATE TAB ]]--[[ CLIMATE TAB ]]--[[ CLIMATE TAB ]]--[[ CLIMATE TAB ]]
+  ### CATCH SELECTED LANGUAGE --------------------------------------------------
+
+  langue <- reactive({
+
+    if (suffix() %in% c("climate", "species", "network")) {
+
+      input[[paste0("language_", suffix())]]
+
+    } else {
+
+      NULL
+    }
+  })
 
 
-  observe({
+  ### GET VARIABLE NAMES COLUMNS -----------------------------------------------
 
-    if (suffix() == "climate") {
+  columns <- reactive({
 
+    if (suffix() == "species") {
 
-      ###
-      ### GET INPUTS VALUES AND SET VARIABLES -----------------[[ CLIMATE TAB ]]
-      ###
+      c("common_en", "common_fr", "latin", "inuktitut")
 
-      ### CATCH SELECTED LANGUAGE ----------------------------------------------
+    } else {
 
-      langue <- reactive({
+      if (suffix() %in% c("climate", "network")) {
 
-        input[["language_climate"]]
-      })
+        c("english", "french")
 
+      } else {
 
-      ### GET VARIABLES LIST FOR SELECTED LANGUAGE -----------------------------
-
-      var_list <- reactive({
-
-        c(
-          "Select a variable" = "",
-          sort(as.character(data_climate[ , langue()]))
-        )
-      })
+        "english"
+      }
+    }
+  })
 
 
-      ### GET SELECTED VARIABLE (TRANSLATE IF REQUIRED) ------------------------
+  ### CATCH SELECTED SPECIES GROUP ---------------------------------------------
 
-      var_selected <- reactive({
+  spclass <- reactive({
 
-         # If no variable selected (RESET MAP)
-         if (input[["select_climate"]] == "") {
+    if (suffix() %in% c("species", "ecosystem")) {
 
-          NULL
+      input[[paste0("class_", suffix())]]
+
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### GET VARIABLES LIST FOR THE SELECTED LANGUAGE -----------------------------
+
+  var_list <- reactive({
+
+    if (suffix() %in% c("climate", "species", "network")) {
+
+      if (suffix() %in% c("climate", "network")) {
+
+        rows  <- 1:nrow(data())
+        empty <- c("Select a variable"  = "")
+
+      } else {
+
+        rows  <- which(data()[ , "class"] == spclass())
+        empty <- c("Select a species"  = "")
+
+      }
+
+      c(empty, sort(as.character(data()[rows, langue()])))
+
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### GET SELECTED VARIABLE (translate if required) ----------------------------
+
+  var_selected <- reactive({
+
+    if (suffix() %in% c("climate", "species", "network")) {
+
+      # If no species/variable selected (RESET MAP)
+      if (input[[paste0("select_", suffix())]] == "") {
+
+        NULL
+
+      } else {
+
+        # If different species/variable in the same language (UPDATE MAP)
+        if (length(which(var_list() == input[[paste0("select_", suffix())]])) == 1) {
+
+          input[[paste0("select_", suffix())]]
 
         } else {
 
-           # If different variable in the same language (UPDATE MAP)
-           if (length(which(var_list() == input[["select_climate"]])) == 1) {
+          # If same language but different class (RESET MAP) [only for species tab]
+          if (length(which(data()[ , langue()] == input[[paste0("select_", suffix())]])) == 1) {
 
-            input[["select_climate"]]
+            NULL
 
-          # If same variable in a different language (SAME MAP)
+          # If same species/variable in a different language
           } else {
 
             pos <- NULL
 
-            for (i in c("english", "french")) {
+            for (i in columns()) {
 
-              if (length(which(data_climate[ , i] == input[["select_climate"]])) > 0) {
+              if (length(which(data()[ , i] == input[[paste0("select_", suffix())]])) > 0) {
 
-                pos <- which(data_climate[ , i] == input[["select_climate"]])
+                pos <- which(data()[ , i] == input[[paste0("select_", suffix())]])
               }
             }
 
-            var_list()[which(var_list() == data_climate[pos, langue()])]
+            pos <- which(var_list() == data()[pos, langue()])
+
+            # If match found (SAME MAP)
+            if (length(pos) == 1) {
+
+              var_list()[pos]
+
+            # If no correspondance found (RESET MAP) [Inuktituk]
+            } else {
+
+              NULL
+            }
           }
         }
-      })
+      }
+    } else {
+
+      if (suffix() == "ecosystem") {
+
+        "radio"
+
+      } else {
+
+        if (suffix() == "vulnerability") {
+
+          "Vulnerability index"
+
+        } else {
+
+          NULL
+        }
+      }
+    }
+  })
 
 
-      ### GET SELECTED TIME PERIOD ---------------------------------------------
+  ### GET VARIABLE UNITS (for exported map legend) -----------------------------
 
-      period <- reactive({
+  var_units <- reactive({
 
-        input[["horizon_climate"]]
-      })
+    if (!is.null(var_selected())) {
 
+      if (suffix() == "climate") {
 
-      ### GET SELECTED RCP (ADAPT DEPENDING ON TIME PERIOD) --------------------
+        pos <- NULL
 
-      rcp <- reactive({
+        for (i in columns()) {
 
-        if (period() == "1981-2010") {
+          if (length(which(data()[ , i] == var_selected())) == 1) {
+
+            pos <- which(data()[ , i] == var_selected())
+          }
+        }
+
+        unit <- as.character(data()[pos, "units"])
+
+        if (unit == "-") {
 
           NULL
 
         } else {
 
-          if (is.null(input[["scenario_climate"]])) {
+          as.character(data()[pos, "units"])
 
-            "rcp45_climate"
+        }
+      } else {
+
+        NULL
+      }
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### GET SELECTED TIME PERIOD -------------------------------------------------
+
+  period <- reactive({
+
+    if (suffix() %in% c("climate", "species", "ecosystem", "network", "vulnerability")) {
+
+      input[[paste0("horizon_", suffix())]]
+
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### GET SELECTED RCP (adapt depending on time period) ------------------------
+
+  rcp <- reactive({
+
+    if (suffix() %in% c("climate", "species", "ecosystem", "network", "vulnerability")) {
+
+      if (period() == "1981-2010") {
+
+        NULL
+
+      } else {
+
+        if (is.null(input[[paste0("scenario_", suffix())]])) {
+
+          paste0("rcp45_", suffix())
+
+        } else {
+
+          input[[paste0("scenario_", suffix())]]
+
+        }
+      }
+
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### SET RCP LABEL (for exported map legend) ----------------------------------
+
+  rcp_legend <- reactive({
+
+    if (!is.null(rcp())) {
+
+      if (rcp() == paste0("rcp45_", suffix())) {
+
+        "RCP4.5"
+
+      } else {
+
+        "RCP8.5"
+      }
+
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### GET SELECTED INFORMATION (adapt depending on time period) ----------------
+
+  information <- reactive({
+
+    if (suffix() %in% c("climate", "species", "ecosystem", "network", "vulnerability")) {
+
+      if (suffix() == "species") {
+
+        if (period() != "1981-2010" && input[[paste0("infos_", suffix())]] == paste0("observations_", suffix())){
+
+          paste0("binaries_", suffix())
+
+        } else {
+
+          input[[paste0("infos_", suffix())]]
+        }
+
+      } else {
+
+        if (suffix() == "climate") {
+
+          if (period() == "1981-2010"){
+
+            paste0("normals_", suffix())
 
           } else {
 
-            input[["scenario_climate"]]
+            input[[paste0("infos_", suffix())]]
+
           }
-        }
-      })
 
-      rcp_lab <- reactive({
+        } else {
 
-        if (!is.null(rcp())) {
+          if (suffix() == "ecosystem") {
 
-          if (rcp() == "rcp45_climate") {
+            if (period() == "1981-2010"){
 
-            "RCP4.5"
+              "richness"
+
+            } else {
+
+              input[[paste0("infos_", suffix())]]
+            }
 
           } else {
 
-            "RCP8.5"
+            if (suffix() == "network") {
+
+              if (period() == "1981-2010"){
+
+                paste0("values_", suffix())
+
+              } else {
+
+                input[[paste0("infos_", suffix())]]
+              }
+
+            } else {
+
+              "vulnerability"
+            }
           }
-
-        } else {
-
-          NULL
         }
-      })
+      }
 
-      ### GET SELECTED VARIABLE ENGLISH NAME (FOR LEGEND) ----------------------
+    } else {
 
-      var_english <- reactive({
-
-        if (!is.null(var_selected())) {
-
-          pos <- which(
-            data_climate[ , "english"] == var_selected() |
-            data_climate[ , "french"]  == var_selected()
-          )
-
-          as.character(data_climate[pos, "english"])
-
-        } else {
-
-          NULL
-        }
-      })
+      NULL
+    }
+  })
 
 
-      ### GET VARIABLE UNITS (FOR LEGEND) --------------------------------------
+  ### DEFINE LEAFLET LEGEND TITLE ----------------------------------------------
 
-      var_units <- reactive({
+  leaflet_title <- reactive({
 
-        if (!is.null(var_selected())) {
+    if (!is.null(var_selected())) {
 
-          pos <- which(
-            data_climate[ , "english"] == var_selected() |
-            data_climate[ , "french"]  == var_selected()
-          )
+      if (suffix() == "climate") {
 
-          unit <- as.character(data_climate[pos, "units"])
-
-          if (unit == "-") {
-
-            NULL
-
-          } else {
-
-            as.character(data_climate[pos, "units"])
-
-          }
-
-        } else {
-
-          NULL
-        }
-      })
-
-
-      ### GET SELECTED INFORMATION (ADAPT DEPENDING ON TIME PERIOD) ------------
-
-      information <- reactive({
-
-        if (period() == "1981-2010"){
-
-          "normals_climate"
-
-        } else {
-
-          input[["infos_climate"]]
-        }
-      })
-
-      information_lab <- reactive({
-
-        if (information() == "normals_climate") {
+        if (information() == paste0("normals_", suffix())) {
 
           "Climate normals"
 
         } else {
 
-          if (information() == "uncertainties_climate") {
+          if (information() == paste0("uncertainties_", suffix())) {
 
             "Uncertainties"
 
@@ -373,534 +568,307 @@ server <- function(input, output, session) {
             "Anomalies"
           }
         }
-      })
 
-      information_suf <- reactive({
+      } else {
 
-        if (information() == "normals_climate") {
+        if (suffix() == "species") {
 
-          "mean"
+          if (information() == paste0("observations_", suffix())) {
 
-        } else {
-
-          if (information() == "uncertainties_climate") {
-
-            "sd"
+            "Observations"
 
           } else {
 
-            "diff"
+            if (information() == paste0("binaries_", suffix())) {
+
+              "Presence/absence"
+
+            } else {
+
+              if (information() == paste0("probabilities_", suffix())) {
+
+                "Probabilities"
+
+              } else {
+
+                "Uncertainties"
+              }
+            }
           }
-        }
-      })
 
+        } else {
 
-      ### GET SELECTED RAMP COLOR ----------------------------------------------
+          if (suffix() == "ecosystem") {
 
-      couleur <- reactive({
+            if (information() == "richness") {
 
-        input[["color_climate"]]
-      })
+              if (spclass() == "total") {
 
+                "Number of species"
 
-      ### GET SELECTED DPI (FOR DOWNLOAD MAP) ----------------------------------
+              } else {
 
-      dpi <- reactive({
+                if (spclass() == "birds") {
 
-        as.numeric(input[["dpi_climate"]])
-      })
+                  "Number of species<br />(birds)"
 
+                } else {
 
-      ### GET SELECTED MAP OUTPUT TYPE (FOR DOWNLOAD MAP) ----------------------
+                  "Number of species<br />(mammals)"
+                }
+              }
 
-      type <- reactive({
+            } else {
 
-        input[["format_climate"]]
-      })
+              if (information() == "gains") {
 
+                if (spclass() == "total") {
 
-      ### SET RASTER PATH ------------------------------------------------------
+                  "Species gains (%)"
 
-      raster_path <- reactive({
+                } else {
 
-        if (!is.null(var_selected())) {
+                  if (spclass() == "birds") {
 
-          pos <- which(
-            data_climate[ , "english"] == var_selected() |
-            data_climate[ , "french"]  == var_selected()
-          )
+                    "Species gains (%)<br />(birds)"
 
-          code <- data_climate[pos, "code"]
+                  } else {
 
-          if (period() == "1981-2010"){
+                    "Species gains (%)<br />(mammals)"
+                  }
+                }
 
-            paste0(
-              "data/climate/",
-              code,
-              "_",
-              gsub("-", "", period()),
-              "_",
-              information_suf()
-            )
+              } else {
+
+                if (information() == "losses") {
+
+                  if (spclass() == "total") {
+
+                    "Species losses (%)"
+
+                  } else {
+
+                    if (spclass() == "birds") {
+
+                      "Species losses (%)<br />(birds)"
+
+                    } else {
+
+                      "Species losses (%)<br />(birds)"
+                    }
+                  }
+
+                } else {
+
+                  if (spclass() == "total") {
+
+                    "Total turnover"
+
+                  } else {
+
+                    if (spclass() == "birds") {
+
+                      "Birds turnover"
+
+                    } else {
+
+                      "Mammals turnover"
+                    }
+                  }
+                }
+              }
+            }
 
           } else {
 
-            paste0(
-              "data/climate/",
-              code,
-              "_",
-              gsub("-", "", period()),
-              "_",
-              tolower(gsub("\\.", "", rcp_lab())),
-              "_",
-              information_suf()
-            )
+            if (suffix() == "network") {
+
+              if (information() == paste0("values_", suffix())) {
+
+                "Values"
+
+              } else {
+
+                "Anomalies"
+              }
+
+            } else {
+
+              "Vulnerability index"
+            }
+          }
+        }
+      }
+
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### DEFINE VARIABLE NAME (for exported map) ----------------------------------
+
+  var_english <- reactive({
+
+    if (!is.null(var_selected())) {
+
+      if (suffix() %in% c("climate", "species", "network", "vulnerability")) {
+
+        pos <- NULL
+
+        for (i in columns()) {
+
+          if (length(which(data()[ , i] == var_selected())) == 1) {
+
+            pos <- which(data()[ , i] == var_selected())
+          }
+        }
+
+        as.character(data()[pos, grep("^english$|^common_en$", colnames(data()))])
+
+      } else {
+
+        pos <- which(data()[ , "info"]  == information() & data()[ , "class"] == spclass())
+        xxx <- data()[pos, "english"]
+
+        if (length(grep(" \\(%\\)", xxx)) == 1) {
+
+          xxx <- paste0("Percentage of ", gsub(" \\(%\\)", "", xxx))
+          xxx <- gsub("S", "s", xxx)
+        }
+
+        paste0(xxx, " (", data()[pos, "class"], ")")
+      }
+
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### DEFINE LEGEND TITLE (for exported map) -----------------------------------
+
+  legend_title <- reactive({
+
+    if (!is.null(var_selected())) {
+
+      if (suffix() == "climate") {
+
+        if (information() == paste0("normals_", suffix())) {
+
+          leg_suffix <- ""
+
+        } else {
+
+          if (information() == paste0("uncertainties_", suffix())) {
+
+            leg_suffix <- " (Uncertainties)"
+
+          } else {
+
+            leg_suffix <- " (Anomalies)"
+          }
+        }
+
+      } else {
+
+        if (suffix() == "species") {
+
+          if (information() == paste0("observations_", suffix())) {
+
+            leg_suffix <- " (Observations)"
+
+          } else {
+
+            if (information() == paste0("binaries_", suffix())) {
+
+              leg_suffix <- ""
+
+            } else {
+
+              if (information() == paste0("probabilities_", suffix())) {
+
+                leg_suffix <- ""
+
+              } else {
+
+                leg_suffix <- " (Uncertainties)"
+              }
+            }
           }
 
         } else {
 
-          NULL
-        }
-      })
+          if (suffix() == "network") {
 
+            if (information() == paste0("anomalies_", suffix())) {
 
-      ### IMPORT RASTER --------------------------------------------------------
+              leg_suffix <- " (Anomalies)"
 
-      ras <- reactive({
+            } else {
 
-        if (!is.null(var_selected())) {
+              leg_suffix <- ""
+            }
 
-          readRDS(paste0(raster_path(), ".rds"))
+          } else {
 
-        } else {
-
-          NULL
-        }
-      })
-
-
-      ### CREATE COLOR PALETTE (BASED ON DATA) ---------------------------------
-
-      couleurs <- reactive({
-
-        if (!is.null(var_selected())) {
-
-          # Color palette
-          mycol <- brewer.pal(
-            n    = rampcolors[which(rampcolors[ , "palette"] == gsub("-rev", "", couleur())), "maxcolors"],
-            name = gsub("-rev", "", couleur())
-          )
-
-          # Reverse colors (if required)
-          if (length(grep("-rev", couleur())) == 1) {
-
-            mycol <- mycol[length(mycol):1]
+            leg_suffix <- ""
           }
-
-          # Categorize data
-          colorNumeric(
-            palette  = mycol,
-            domain   = values(ras()),
-            na.color = "transparent"
-          )
-
-        } else {
-
-          NULL
         }
-      })
+      }
 
-
-      ###
-      ### UPDATE UI INPUTS ------------------------------------[[ CLIMATE TAB ]]
-      ###
-
-
-      ### UPDATE LIST OF CLIMATE VARIABLES (DEPENDING ON LANGUAGE) -------------
-
-      updateSelectInput(
-        session  = session,
-        inputId  = "select_climate",
-        label    = NULL,
-        choices  = var_list(),
-        selected = ifelse(!is.null(var_selected()), var_selected(), "")
+      paste0(
+        var_english(),
+        ifelse(
+          test = !is.null(var_units()),
+          yes  = paste0(" (in ", var_units(), ") "),
+          no   = " "
+        ),
+        period(),
+        ifelse(
+          !is.null(rcp()),
+          paste0(" [", rcp_legend(), "]"),
+          ""
+        ),
+        leg_suffix
       )
 
+    } else {
 
-      if (period() == "1981-2010") {
-
-        ### DISABLE RCP RADIO --------------------------------------------------
-
-        shinyjs::disable(selector = "[type=radio][value='rcp45_climate']")
-        shinyjs::disable(selector = "[type=radio][value='rcp85_climate']")
-        shinyjs::runjs('$("#scenario_climate .shiny-options-group").css({"color": "#aaa"});')
-        shinyjs::runjs('$("#scenario_climate .shiny-options-group label").css({"cursor": "not-allowed"});')
-        shinyjs::runjs('$("[type=radio][value=\'rcp45_climate\']").prop("checked", false);')
-        shinyjs::runjs('$("[type=radio][value=\'rcp85_climate\']").prop("checked", false);')
+      NULL
+    }
+  })
 
 
-        ### DISABLE ANOMALIES & UNCERTAINTIES ----------------------------------
+  ### DATA SOURCE (for exported map) -------------------------------------------
 
-        shinyjs::disable(selector = "[type=radio][value='anomalies_climate']")
-        shinyjs::disable(selector = "[type=radio][value='uncertainties_climate']")
-        shinyjs::runjs('$("#infos_climate .shiny-options-group .radio:nth-child(2)").css({"color": "#aaa"});')
-        shinyjs::runjs('$("#infos_climate .shiny-options-group .radio:nth-child(2) label").css({"cursor": "not-allowed"});')
-        shinyjs::runjs('$("#infos_climate .shiny-options-group .radio:nth-child(3)").css({"color": "#aaa"});')
-        shinyjs::runjs('$("#infos_climate .shiny-options-group .radio:nth-child(3) label").css({"cursor": "not-allowed"});')
-        shinyjs::runjs('$("[type=radio][value=\'anomalies_climate\']").prop("checked", false);')
-        shinyjs::runjs('$("[type=radio][value=\'uncertainties_climate\']").prop("checked", false);')
-        updateRadioButtons(session, inputId = "infos_climate", selected = information())
+  data_source <- reactive({
+
+    if (!is.null(var_selected())) {
+
+      if (suffix() == "species") {
+
+        if (information() == "observations_species") {
+
+          if (spclass() == "Aves") {
+
+            datasource <- "BirdLife International & NatureServe"
+
+          } else {
+
+            datasource <- "IUCN"
+          }
+
+        } else {
+
+          datasource <- NULL
+        }
 
       } else {
 
-
-        ### ENABLE RCP RADIO ---------------------------------------------------
-
-        shinyjs::enable(selector = "[type=radio][value='rcp45_climate']")
-        shinyjs::enable(selector = "[type=radio][value='rcp85_climate']")
-        shinyjs::runjs('$("#scenario_climate .shiny-options-group").css("color", "#555");')
-        shinyjs::runjs('$("#scenario_climate .shiny-options-group label").css({"cursor": "pointer"});')
-
-        if (is.null(rcp())){
-
-          updateRadioButtons(session, inputId = "scenario_climate", selected = "rcp45_climate")
-
-        } else {
-
-          updateRadioButtons(session, inputId = "scenario_climate", selected = rcp())
-
-        }
-
-        ### ENABLE ANOMALIES & UNCERTAINTIES -----------------------------------
-
-        shinyjs::enable(selector = "[type=radio][value='anomalies_climate']")
-        shinyjs::enable(selector = "[type=radio][value='uncertainties_climate']")
-        shinyjs::runjs('$("#infos_climate .shiny-options-group .radio:nth-child(2)").css({"color": "#555"});')
-        shinyjs::runjs('$("#infos_climate .shiny-options-group .radio:nth-child(2) label").css({"cursor": "pointer"});')
-        shinyjs::runjs('$("#infos_climate .shiny-options-group .radio:nth-child(3)").css({"color": "#555"});')
-        shinyjs::runjs('$("#infos_climate .shiny-options-group .radio:nth-child(3) label").css({"cursor": "pointer"});')
-      }
-
-      ### ENABLE / DISABLE DPI OPTION ------------------------------------------
-
-      if (!is.null(type())) {
-        if (type() == "PDF") {
-          shinyjs::disable(id = "dpi_climate")
-        } else {
-          shinyjs::enable(id = "dpi_climate")
-        }
-      }
-
-
-      ###
-      ### SHOW / HIDE COLOR PALETTES --------------------------[[ CLIMATE TAB ]]
-      ###
-
-      onclick("grad_climate", function() {
-        toggle(id = "menu_climate")
-        toggleClass(id = "grad_climate", class = "shadow")
-      })
-
-      onclick("menu_climate", function(){
-        toggle(id = "menu_climate")
-        toggleClass(id = "grad_climate", class = "shadow")
-      })
-
-
-      ###
-      ### CLICK ON HELP BUTTON --------------------------------[[ CLIMATE TAB ]]
-      ###
-
-      onclick("help-climate", function(){
-
-        showModal(
-          modalDialog(
-
-            title = "Additional informations",
-
-            includeHTML("includes/help-climate.html"),
-
-            easyClose = TRUE,
-            footer    = NULL
-          )
-        )
-      })
-
-
-      ###
-      ### UPDATE/RESET MAP ------------------------------------[[ CLIMATE TAB ]]
-      ###
-
-
-      ### UPDATE MAP -----------------------------------------------------------
-
-      if (!is.null(var_selected())) {
-
-        leafletProxy(
-          mapId = "map_climate",
-          data  = area()
-        ) %>%
-
-        clearShapes() %>% clearControls() %>% clearImages() %>%
-
-        addRasterImage(
-          x       = ras(),
-          colors  = couleurs(),
-          opacity = .75,
-          project = FALSE
-        ) %>%
-
-        addPolygons(
-          color       = "#8e501d",
-          weight      = 2.0,
-          opacity     = 1.0,
-          fillOpacity = 0,
-          fillColor   = "transparent"
-        ) %>%
-
-        fitBounds(
-          lng1 = ~coords()[1],
-          lat1 = ~coords()[2],
-          lng2 = ~coords()[3],
-          lat2 = ~coords()[4]
-        ) %>%
-
-        addLegend(
-          position  = "bottomleft",
-          pal       = couleurs(),
-          values    = ras()[],
-          title     = information_lab(),
-          opacity   = 1,
-          className = "info legend"
-        )
-
-
-      ### RESET MAP ------------------------------------------------------------
-
-      } else {
-
-        leafletProxy(
-          mapId = "map_climate",
-          data  = area()
-        ) %>%
-        clearShapes() %>% clearControls() %>% clearImages() %>%
-
-        addPolygons(
-          color       = "#8e501d",
-          weight      = 2.0,
-          opacity     = 1.0,
-          fillOpacity = 0,
-          fillColor   = "transparent"
-        ) %>%
-
-        fitBounds(
-          lng1 = ~coords()[1],
-          lat1 = ~coords()[2],
-          lng2 = ~coords()[3],
-          lat2 = ~coords()[4]
-        )
-      }
-
-
-      ###
-      ### CLICK ON DOWNLOAD BUTTON (MAIN PANEL) ---------------[[ CLIMATE TAB ]]
-      ###
-
-      onclick("btn-climate", function(){
-
-
-        ### SHOW DOWNLOAD PARAMETERS -------------------------------------------
-
-        if (!is.null(var_selected())) {
-
-          showModal(
-            modalDialog(
-
-              title = "Download options",
-
-              HTML("<div id=\"save_climate\">"),
-
-              fluidRow(
-
-                column(6,
-                  radioButtons(
-                    inputId  = "format_climate",
-                    label    = "Output format:",
-                    choices  = c("PNG", "JPEG", "TIFF", "PDF"),
-                    selected = "PNG",
-                    inline   = FALSE
-                  )
-                ),
-
-                column(6,
-                  selectInput(
-                    inputId  = "dpi_climate",
-                    label    = "Resolution (dpi):",
-                    choices  = c(72, 96, 150, 300, 600, 900),
-                    selected = 300,
-                    width    = 150
-                  )
-                )
-              ),
-
-              HTML("<div class=\"bouton\">"),
-              downloadButton("download_climate", "Download map"),
-              HTML("<br /></div></div>"),
-
-              easyClose = TRUE,
-              footer    = NULL
-            )
-          )
-
-
-        ### ERROR MESSAGE (NO VARIABLE SELECTED) -------------------------------
-
-        } else {
-
-          showModal(
-            modalDialog(
-
-              title = "Warning!",
-
-              HTML(
-                paste0(
-                  "<div class=\"msg\">",
-                  "Please select a climate variable.",
-                  "<br /><br />",
-                  "<i class=\"fas fa-times-circle fa-4x\"></i>",
-                  "<br /><br />",
-                  "</div>"
-                )
-              ),
-              easyClose = TRUE,
-              footer    = NULL
-            )
-          )
-        }
-      })
-
-
-      ###
-      ### CLICK DOWNLOAD BUTTON (POPUP WINDOW) ----------------[[ CLIMATE TAB ]]
-      ###
-
-      output$download_climate <- downloadHandler(
-
-        filename =  function() {
-
-
-          ### EXPORTED MAP NAME ------------------------------------------------
-
-          paste0(
-            "map-",
-            gsub("[[:punct:]]|[[:space:]]", "", Sys.time()),
-            ".",
-            tolower(type())
-          )
-        },
-
-        content  = function(file) {
-
-
-          ### MESSAGE DURING MAP PREPARATION -----------------------------------
-
-          showModal(
-            modalDialog(
-
-              title = "Message",
-
-              HTML(
-                paste0(
-                  "<div class=\"msg\">",
-                  "Your map is being prepared.",
-                  "<br />",
-                  "Please wait a few seconds...",
-                  "<br /><br />",
-                  "<i class=\"fas fa-spinner faa-spin animated fa-4x\"></i>",
-                  "<br /><br />",
-                  "</div>"
-                )
-              ),
-              easyClose = FALSE,
-              footer    = NULL
-            )
-          )
-
-
-          ### DEVISE INITIALISATION --------------------------------------------
-
-          if (type() == "PNG") {
-            CairoPNG(
-              filename  = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent",
-              units     = "in",
-              res       = dpi()
-            )
-          }
-
-          if (type() == "JPEG") {
-            CairoJPEG(
-              filename  = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent",
-              units     = "in",
-              res       = dpi()
-            )
-          }
-
-          if (type() == "TIFF") {
-            CairoTIFF(
-              filename  = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent",
-              units     = "in",
-              res       = dpi()
-            )
-          }
-
-          if (type() == "PDF") {
-            CairoPDF(
-              file      = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent"
-            )
-          }
-
-
-          ### MAP INFORMATIONS -------------------------------------------------
-
-          titre <- paste0(
-            var_english(),
-            ifelse(
-              !is.null(var_units()),
-              paste0(" (in ", var_units(), ") "),
-              " "
-            ),
-            period(),
-            ifelse(
-              !is.null(rcp()),
-              paste0(" [", rcp_lab(), "]"),
-              ""
-            ),
-            ifelse(
-              information_lab() == "Anomalies",
-              " (Anomalies)",
-              ifelse(
-                information_lab() == "Uncertainties",
-                " (Uncertainties)",
-                ""
-              )
-            )
-          )
+        if (suffix() == "climate") {
 
           if (period() == "1981-2010") {
 
@@ -911,1357 +879,318 @@ server <- function(input, output, session) {
             datasource <- "CORDEX/Ouranos"
           }
 
+        } else {
 
-          ### MAP PRODUCTION ---------------------------------------------------
-
-          mapQuebec(
-            x          = ras(),
-            title      = titre,
-            type       = NULL,
-            datasource = datasource,
-            palette    = gsub("-rev", "", couleur()),
-            reverse    = ifelse(length(grep("-rev", couleur())) == 1, TRUE, FALSE),
-            bins       = 7
-          )
-
-
-          ### DEVISE CLOSING ---------------------------------------------------
-
-          dev.off()
-
-
-          ### SUCCESS MESSAGE --------------------------------------------------
-
-          removeModal()
-
-          showModal(
-            modalDialog(
-
-              title = "Congratulations!",
-              HTML(
-                paste0(
-                  "<div class=\"msg\">",
-                  "Your map has been successfully downloaded.",
-                  "<br /><br />",
-                  "<i class=\"fas fa-check-circle fa-4x\"></i>",
-                  "<br /><br />",
-                  "</div>"
-                )
-              ),
-              easyClose = TRUE,
-              footer    = NULL
-            )
-          )
+          NULL
         }
-      )
+      }
+
+    } else {
+
+      NULL
     }
   })
 
 
-  ### [[ SPECIES TAB ]]--[[ SPECIES TAB ]]--[[ SPECIES TAB ]]--[[ SPECIES TAB ]]
-  ### [[ SPECIES TAB ]]--[[ SPECIES TAB ]]--[[ SPECIES TAB ]]--[[ SPECIES TAB ]]
-  ### [[ SPECIES TAB ]]--[[ SPECIES TAB ]]--[[ SPECIES TAB ]]--[[ SPECIES TAB ]]
+  ### GET FILENAME SUFFIX (if required) ----------------------------------------
 
-  observe({
+  filename_ext <- reactive({
 
-    if (suffix() == "species") {
+    if (!is.null(var_selected())) {
 
+      if (suffix() == "climate") {
 
-      ###
-      ### GET INPUTS VALUES AND SET VARIABLES -----------------[[ SPECIES TAB ]]
-      ###
+        if (information() == paste0("normals_", suffix())) {
 
-      ### CATCH SELECTED LANGUAGE ----------------------------------------------
-
-      langue <- reactive({
-
-        input[["language_species"]]
-      })
-
-
-      ### CATCH SELECTED SPECIES GROUP -----------------------------------------
-
-      spclass <- reactive({
-
-        input[["class_species"]]
-      })
-
-
-      ### GET VARIABLES LIST FOR SELECTED LANGUAGE -----------------------------
-
-      var_list <- reactive({
-
-        c(
-          "Select a species"  = "",
-          sort(as.character(data_species[which(data_species[ , "class"] == spclass()), langue()]))
-        )
-      })
-
-
-      ### GET SELECTED VARIABLE (TRANSLATE IF REQUIRED) ------------------------
-
-      var_selected <- reactive({
-
-         # If no species selected (RESET MAP)
-         if (input[["select_species"]] == "") {
-
-          NULL
+          "_mean"
 
         } else {
 
-           # If different species in the same language (UPDATE MAP)
-           if (length(which(var_list() == input[["select_species"]])) == 1) {
+          if (information() == paste0("uncertainties_", suffix())) {
 
-            input[["select_species"]]
+            "_sd"
 
           } else {
 
-            # If same language but different class (RESET MAP)
-            if (length(which(data_species[ , langue()] == input[["select_species"]])) == 1) {
+            "_diff"
+          }
+        }
 
-              NULL
+      } else {
 
-            # If same species in a different language
+        if (suffix() == "species") {
+
+          if (information() == paste0("observations_", suffix())) {
+
+            "_observations"
+
+          } else {
+
+            if (information() == paste0("binaries_", suffix())) {
+
+              "_binaries"
+
             } else {
 
-              pos <- NULL
+              if (information() == paste0("probabilities_", suffix())) {
 
-              for (i in c("common_en", "common_fr", "latin", "inuktitut")) {
+                "_probabilities"
 
-                if (length(which(data_species[ , i] == input[["select_species"]])) > 0) {
-
-                  pos <- which(data_species[ , i] == input[["select_species"]])
-                }
-              }
-
-              pos <- which(var_list() == data_species[pos, langue()])
-
-              # Match found (SAME MAP)
-              if (length(pos) == 1) {
-
-                var_list()[pos]
-
-              # No correspondance found in Inuktituk (RESET MAP)
               } else {
 
-                NULL
+                "_uncertainties"
               }
             }
           }
-        }
-      })
-
-
-      ### GET SELECTED TIME PERIOD ---------------------------------------------
-
-      period <- reactive({
-
-        input[["horizon_species"]]
-      })
-
-
-      ### GET SELECTED RCP (ADAPT DEPENDING ON TIME PERIOD) --------------------
-
-      rcp <- reactive({
-
-        if (period() == "1981-2010") {
-
-          NULL
 
         } else {
 
-          if (is.null(input[["scenario_species"]])) {
+          if (suffix() == "network") {
 
-            "rcp45_species"
+            if (information() == paste0("anomalies_", suffix())) {
 
-          } else {
-
-            input[["scenario_species"]]
-          }
-        }
-      })
-
-      rcp_lab <- reactive({
-
-        if (!is.null(rcp())) {
-
-          if (rcp() == "rcp45_species") {
-
-            "RCP4.5"
-
-          } else {
-
-            "RCP8.5"
-          }
-
-        } else {
-
-          NULL
-        }
-      })
-
-
-      ### GET SELECTED VARIABLE ENGLISH NAME (FOR LEGEND) ----------------------
-
-      var_english <- reactive({
-
-        if (!is.null(var_selected())) {
-
-          pos <- which(
-            data_species[ , "common_en"] == var_selected() |
-            data_species[ , "common_fr"] == var_selected() |
-            data_species[ , "latin"]     == var_selected() |
-            data_species[ , "inuktitut"] == var_selected()
-          )
-
-          as.character(data_species[pos, "common_en"])
-
-        } else {
-
-          NULL
-        }
-      })
-
-
-      ### GET SELECTED INFORMATION (ADAPT DEPENDING ON TIME PERIOD) ------------
-
-      information <- reactive({
-
-        if (period() != "1981-2010" && input[["infos_species"]] == "observations_species"){
-
-          "binaries_species"
-
-        } else {
-
-          input[["infos_species"]]
-        }
-      })
-
-      information_lab <- reactive({
-
-        if (information() == "observations_species") {
-
-          "Observations"
-
-        } else {
-
-          if (information() == "binaries_species") {
-
-            "Binaries"
-
-          } else {
-
-            if (information() == "probabilities_species") {
-
-              "Probabilities"
+              "_diff"
 
             } else {
 
-              "Uncertainties"
-            }
-          }
-        }
-      })
-
-
-
-      information_suf <- reactive({
-
-        if (information() == "observations_species") {
-
-          "observations"
-
-        } else {
-
-          if (information() == "binaries_species") {
-
-            "binaries"
-
-          } else {
-
-            if (information() == "probabilities_species") {
-
-              "probabilities"
-
-            } else {
-
-              "uncertainties"
-            }
-          }
-        }
-      })
-
-
-      ### GET SELECTED RAMP COLOR ----------------------------------------------
-
-      couleur <- reactive({
-
-        input[["color_species"]]
-      })
-
-
-      ### GET SELECTED DPI (FOR DOWNLOAD MAP) ----------------------------------
-
-      dpi <- reactive({
-
-        as.numeric(input[["dpi_species"]])
-      })
-
-
-      ### GET SELECTED MAP OUTPUT TYPE (FOR DOWNLOAD MAP) ----------------------
-
-      type <- reactive({
-
-        input[["format_species"]]
-      })
-
-
-      ### SET RASTER PATH ------------------------------------------------------
-
-      raster_path <- reactive({
-
-        if (!is.null(var_selected())) {
-
-          pos <- which(
-            data_species[ , "common_en"] == var_selected() |
-            data_species[ , "common_fr"] == var_selected() |
-            data_species[ , "latin"]     == var_selected() |
-            data_species[ , "inuktitut"] == var_selected()
-          )
-
-          code <- data_species[pos, "code"]
-
-          if (period() == "1981-2010"){
-
-            paste0(
-              "data/",
-              tolower(spclass()),
-              "/",
-              code,
-              "_",
-              period(),
-              "_",
-              information_suf()
-            )
-
-          } else {
-
-            paste0(
-              "data/",
-              tolower(spclass()),
-              "/",
-              code,
-              "_",
-              period(),
-              "_",
-              tolower(gsub("\\.", "", rcp_lab())),
-              "_",
-              information_suf()
-            )
-          }
-
-        } else {
-
-          NULL
-        }
-      })
-
-
-      ### IMPORT RASTER --------------------------------------------------------
-
-      ras <- reactive({
-
-        if (!is.null(var_selected())) {
-
-          ras <- readRDS(paste0(raster_path(), ".rds"))
-
-          # Rescale probabilities
-          if (information_lab() == "Probabilities") {
-
-            ras[][which(!is.na(ras[]))] <- ifelse(
-              ras[][which(!is.na(ras[]))] > 1,
-              1,
-              ras[][which(!is.na(ras[]))]
-            )
-          }
-
-          ras
-
-        } else {
-
-          NULL
-        }
-      })
-
-
-      ### CREATE COLOR PALETTE (BASED ON DATA) ---------------------------------
-
-      couleurs <- reactive({
-
-        if (!is.null(var_selected())) {
-
-          # Color palette
-          mycol <- brewer.pal(
-            n    = rampcolors[which(rampcolors[ , "palette"] == gsub("-rev", "", couleur())), "maxcolors"],
-            name = gsub("-rev", "", couleur())
-          )
-
-          # Reverse colors (if required)
-          if (length(grep("-rev", couleur())) == 1) {
-
-            mycol <- mycol[length(mycol):1]
-          }
-
-          # More than 2 values
-          if (length(unique(values(ras()))) > 2) {
-
-            colorNumeric(
-              palette  = mycol,
-              domain   = values(ras()),
-              na.color = "transparent"
-            )
-
-          } else {
-
-            # If one single value (only presence or only absence)
-            if (length(which(unique(values(ras())) == 0) == 1)) {
-
-              colorNumeric(
-                palette  = mycol[1],
-                domain   = values(ras()),
-                na.color = "transparent"
-              )
-
-            # If binary data
-            } else {
-
-              colorNumeric(
-                palette  = mycol[length(mycol)],
-                domain   = values(ras()),
-                na.color = "transparent"
-              )
-            }
-          }
-
-        } else {
-
-          NULL
-        }
-      })
-
-
-      ###
-      ### UPDATE UI INPUTS ------------------------------------[[ SPECIES TAB ]]
-      ###
-
-      ### UPDATE LIST OF CLIMATE VARIABLES (DEPENDING ON LANGUAGE) -------------
-
-      updateSelectInput(
-        session  = session,
-        inputId  = "select_species",
-        label    = NULL,
-        choices  = var_list(),
-        selected = ifelse(!is.null(var_selected()), var_selected(), "")
-      )
-
-
-      if (period() == "1981-2010") {
-
-        ### DISABLE RCP RADIO --------------------------------------------------
-
-        shinyjs::disable(selector = "[type=radio][value='rcp45_species']")
-        shinyjs::disable(selector = "[type=radio][value='rcp85_species']")
-        shinyjs::runjs('$("#scenario_species .shiny-options-group").css({"color": "#aaa"});')
-        shinyjs::runjs('$("#scenario_species .shiny-options-group label").css({"cursor": "not-allowed"});')
-        shinyjs::runjs('$("[type=radio][value=\'rcp45_species\']").prop("checked", false);')
-        shinyjs::runjs('$("[type=radio][value=\'rcp85_species\']").prop("checked", false);')
-
-
-        ### ENABLE OBSERVATIONS ------------------------------------------------
-
-        shinyjs::enable(selector = "[type=radio][value='observations_species']")
-        shinyjs::runjs('$("#infos_species .shiny-options-group .radio:first-child").css({"color": "#555"});')
-        shinyjs::runjs('$("#infos_species .shiny-options-group .radio:first-child label").css({"cursor": "pointer"});')
-
-      } else {
-
-
-        ### ENABLE RCP RADIO ---------------------------------------------------
-
-        shinyjs::enable(selector = "[type=radio][value='rcp45_species']")
-        shinyjs::enable(selector = "[type=radio][value='rcp85_species']")
-        shinyjs::runjs('$("#scenario_species .shiny-options-group").css("color", "#555");')
-        shinyjs::runjs('$("#scenario_species .shiny-options-group label").css({"cursor": "pointer"});')
-
-        if (is.null(rcp())){
-
-          updateRadioButtons(session, inputId = "scenario_species", selected = "rcp45_species")
-
-        } else {
-
-          updateRadioButtons(session, inputId = "scenario_species", selected = rcp())
-
-        }
-
-        ### DISABLE OBSERVATIONS -----------------------------------------------
-
-        shinyjs::disable(selector = "[type=radio][value='observations_species']")
-        shinyjs::runjs('$("#infos_species .shiny-options-group .radio:first-child").css({"color": "#aaa"});')
-        shinyjs::runjs('$("#infos_species .shiny-options-group .radio:first-child label").css({"cursor": "not-allowed"});')
-        updateRadioButtons(session, inputId = "infos_species", selected = information())
-      }
-
-      ### ENABLE / DISABLE DPI OPTION ------------------------------------------
-
-      if (!is.null(type())) {
-        if (type() == "PDF") {
-          shinyjs::disable(id = "dpi_species")
-        } else {
-          shinyjs::enable(id = "dpi_species")
-        }
-      }
-
-
-      ###
-      ### SHOW / HIDE COLOR PALETTES --------------------------[[ SPECIES TAB ]]
-      ###
-
-      onclick("grad_species", function() {
-        toggle(id = "menu_species")
-        toggleClass(id = "grad_species", class = "shadow")
-      })
-
-      onclick("menu_species", function(){
-        toggle(id = "menu_species")
-        toggleClass(id = "grad_species", class = "shadow")
-      })
-
-
-      ###
-      ### CLICK ON HELP BUTTON --------------------------------[[ SPECIES TAB ]]
-      ###
-
-      onclick("help-species", function(){
-
-        showModal(
-          modalDialog(
-
-            title = "Additional informations",
-
-            includeHTML("includes/help-species.html"),
-
-            easyClose = TRUE,
-            footer    = NULL
-          )
-        )
-      })
-
-
-      ###
-      ### UPDATE/RESET MAP ------------------------------------[[ SPECIES TAB ]]
-      ###
-
-
-      ### UPDATE MAP -----------------------------------------------------------
-
-      if (!is.null(var_selected())) {
-
-        leafletProxy(
-          mapId = "map_species",
-          data  = area()
-        ) %>%
-
-        clearShapes() %>% clearControls() %>% clearImages() %>%
-
-        addRasterImage(
-          x       = ras(),
-          colors  = couleurs(),
-          opacity = .75,
-          project = FALSE
-        ) %>%
-
-        addPolygons(
-          color       = "#8e501d",
-          weight      = 2.0,
-          opacity     = 1.0,
-          fillOpacity = 0,
-          fillColor   = "transparent"
-        ) %>%
-
-        fitBounds(
-          lng1 = ~coords()[1],
-          lat1 = ~coords()[2],
-          lng2 = ~coords()[3],
-          lat2 = ~coords()[4]
-        ) %>%
-
-        addLegend(
-          position  = "bottomleft",
-          pal       = couleurs(),
-          values    = ras()[],
-          title     = information_lab(),
-          opacity   = 1,
-          className = "info legend"
-        )
-
-
-      ### RESET MAP ------------------------------------------------------------
-
-      } else {
-
-        leafletProxy(
-          mapId = "map_species",
-          data  = area()
-        ) %>%
-        clearShapes() %>% clearControls() %>% clearImages() %>%
-
-        addPolygons(
-          color       = "#8e501d",
-          weight      = 2.0,
-          opacity     = 1.0,
-          fillOpacity = 0,
-          fillColor   = "transparent"
-        ) %>%
-
-        fitBounds(
-          lng1 = ~coords()[1],
-          lat1 = ~coords()[2],
-          lng2 = ~coords()[3],
-          lat2 = ~coords()[4]
-        )
-      }
-
-
-      ###
-      ### CLICK ON DOWNLOAD BUTTON (MAIN PANEL) ---------------[[ SPECIES TAB ]]
-      ###
-
-      onclick("btn-species", function(){
-
-
-        ### SHOW DOWNLOAD PARAMETERS -------------------------------------------
-
-        if (!is.null(var_selected())) {
-
-          showModal(
-            modalDialog(
-
-              title = "Download options",
-
-              HTML("<div id=\"save_species\">"),
-
-              fluidRow(
-
-                column(6,
-                  radioButtons(
-                    inputId  = "format_species",
-                    label    = "Output format:",
-                    choices  = c("PNG", "JPEG", "TIFF", "PDF"),
-                    selected = "PNG",
-                    inline   = FALSE
-                  )
-                ),
-
-                column(6,
-                  selectInput(
-                    inputId  = "dpi_species",
-                    label    = "Resolution (dpi):",
-                    choices  = c(72, 96, 150, 300, 600, 900),
-                    selected = 300,
-                    width    = 150
-                  )
-                )
-              ),
-
-              HTML("<div class=\"bouton\">"),
-              downloadButton("download_species", "Download map"),
-              HTML("<br /></div></div>"),
-
-              easyClose = TRUE,
-              footer    = NULL
-            )
-          )
-
-
-        ### ERROR MESSAGE (NO VARIABLE SELECTED) -------------------------------
-
-        } else {
-
-          showModal(
-            modalDialog(
-
-              title = "Warning!",
-
-              HTML(
-                paste0(
-                  "<div class=\"msg\">",
-                  "Please select a species.",
-                  "<br /><br />",
-                  "<i class=\"fas fa-times-circle fa-4x\"></i>",
-                  "<br /><br />",
-                  "</div>"
-                )
-              ),
-              easyClose = TRUE,
-              footer    = NULL
-            )
-          )
-        }
-      })
-
-
-      ###
-      ### CLICK DOWNLOAD BUTTON (POPUP WINDOW) ----------------[[ SPECIES TAB ]]
-      ###
-
-      output$download_species <- downloadHandler(
-
-        filename =  function() {
-
-
-          ### EXPORTED MAP NAME ----------------------------------------------------
-
-          paste0(
-            "map-",
-            gsub("[[:punct:]]|[[:space:]]", "", Sys.time()),
-            ".",
-            tolower(type())
-          )
-        },
-
-        content  = function(file) {
-
-
-          ### MESSAGE DURING MAP PREPARATION ---------------------------------------
-
-          showModal(
-            modalDialog(
-
-              title = "Message",
-
-              HTML(
-                paste0(
-                  "<div class=\"msg\">",
-                  "Your map is being prepared.",
-                  "<br />",
-                  "Please wait a few seconds...",
-                  "<br /><br />",
-                  "<i class=\"fas fa-spinner faa-spin animated fa-4x\"></i>",
-                  "<br /><br />",
-                  "</div>"
-                )
-              ),
-              easyClose = FALSE,
-              footer    = NULL
-            )
-          )
-
-
-          ### DEVISE INITIALISATION ------------------------------------------------
-
-          if (type() == "PNG") {
-            CairoPNG(
-              filename  = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent",
-              units     = "in",
-              res       = dpi()
-            )
-          }
-
-          if (type() == "JPEG") {
-            CairoJPEG(
-              filename  = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent",
-              units     = "in",
-              res       = dpi()
-            )
-          }
-
-          if (type() == "TIFF") {
-            CairoTIFF(
-              filename  = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent",
-              units     = "in",
-              res       = dpi()
-            )
-          }
-
-          if (type() == "PDF") {
-            CairoPDF(
-              file      = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent"
-            )
-          }
-
-
-          ### MAP INFORMATIONS -----------------------------------------------------
-
-          pos <- which(
-            data_species[ , "common_en"] == var_selected() |
-            data_species[ , "common_fr"] == var_selected() |
-            data_species[ , "latin"]     == var_selected() |
-            data_species[ , "inuktitut"] == var_selected()
-          )
-
-          # var_english <- as.character(data_species[pos, "common_en"])
-
-
-          titre <- paste0(
-            var_english(),
-            " ",
-            period(),
-            ifelse(
-              !is.null(rcp()),
-              paste0(" [", rcp_lab(), "]"),
               ""
-            ),
-            ifelse(
-              information_lab() == "Observations",
-              " (Observations)",
-              ifelse(
-                information_lab() == "Uncertainties",
-                " (Uncertainties)",
-                ""
-              )
-            )
-          )
-
-
-          if (period() == "1981-2010") {
-
-            if (spclass() == "Aves") {
-
-              datasource <- "BirdLife International & NatureServe"
-
-            } else {
-
-              datasource <- "IUCN"
             }
 
           } else {
 
-            datasource <- NULL
+            ""
           }
-
-
-          ### MAP PRODUCTION -------------------------------------------------------
-
-          mapQuebec(
-            x          = ras(),
-            title      = titre,
-            type       = ifelse(information_lab() %in% c("Observations", "Binaries"), "binary", 1),
-            datasource = datasource,
-            palette    = gsub("-rev", "", couleur()),
-            reverse    = ifelse(length(grep("-rev", couleur())) == 1, TRUE, FALSE),
-            bins       = 7
-          )
-
-
-          ### DEVISE CLOSING -------------------------------------------------------
-
-          dev.off()
-
-
-          ### SUCCESS MESSAGE ------------------------------------------------------
-
-          removeModal()
-
-          showModal(
-            modalDialog(
-
-              title = "Congratulations!",
-
-              HTML(
-                paste0(
-                  "<div class=\"msg\">",
-                  "Your map has been downloaded.",
-                  "<br /><br />",
-                  "<i class=\"fas fa-check-circle fa-4x\"></i>",
-                  "<br /><br />",
-                  "</div>"
-                )
-              ),
-              easyClose = TRUE,
-              footer    = NULL
-            )
-          )
         }
-      )
+      }
+    } else {
+
+      NULL
     }
   })
 
 
+  ### SET RASTER PATH ------------------------------------------------------
 
-  ###  [[ ECOSYSTEM TAB ]]--------[[ ECOSYSTEM TAB ]]--------[[ ECOSYSTEM TAB ]]
-  ###  [[ ECOSYSTEM TAB ]]--------[[ ECOSYSTEM TAB ]]--------[[ ECOSYSTEM TAB ]]
-  ###  [[ ECOSYSTEM TAB ]]--------[[ ECOSYSTEM TAB ]]--------[[ ECOSYSTEM TAB ]]
+  raster_path <- reactive({
 
-  observe({
+    if (!is.null(var_selected())) {
 
-    if (suffix() == "ecosystem") {
+      if (suffix() %in% c("climate", "species", "network", "vulnerability")) {
 
+        pos <- NULL
 
-      ###
-      ### GET INPUTS VALUES AND SET VARIABLES ---------------[[ ECOSYSTEM TAB ]]
-      ###
+        for (i in columns()) {
 
-      ### CATCH SELECTED SPECIES GROUP -----------------------------------------
+          if (length(which(data()[ , i] == var_selected())) == 1) {
 
-      spclass <- reactive({
-
-        input[["class_ecosystem"]]
-      })
-
-
-      ### GET SELECTED TIME PERIOD ---------------------------------------------
-
-      period <- reactive({
-
-        input[["horizon_ecosystem"]]
-      })
-
-
-      ### GET SELECTED RCP (ADAPT DEPENDING ON TIME PERIOD) --------------------
-
-      rcp <- reactive({
-
-        if (period() == "1981-2010") {
-
-          NULL
-
-        } else {
-
-          if (is.null(input[["scenario_ecosystem"]])) {
-
-            "rcp45_ecosystem"
-
-          } else {
-
-            input[["scenario_ecosystem"]]
+            pos <- which(data()[ , i] == var_selected())
           }
         }
-      })
 
-      rcp_lab <- reactive({
-
-        if (!is.null(rcp())) {
-
-          if (rcp() == "rcp45_ecosystem") {
-
-            "RCP4.5"
-
-          } else {
-
-            "RCP8.5"
-          }
-
-        } else {
-
-          NULL
-        }
-      })
-
-
-      ### GET SELECTED INFORMATION (ADAPT DEPENDING ON TIME PERIOD) ------------
-
-      information <- reactive({
-
-        if (period() == "1981-2010"){
-
-          "richness"
-
-        } else {
-
-          input[["infos_ecosystem"]]
-        }
-      })
-
-      information_lab <- reactive({
-
-        if (information() == "richness") {
-
-          if (spclass() == "total") {
-
-            "Number of species"
-
-          } else {
-
-            if (spclass() == "birds") {
-
-              "Number of species<br />(birds)"
-
-            } else {
-
-              "Number of species<br />(mammals)"
-            }
-          }
-
-        } else {
-
-          if (information() == "gains") {
-
-            if (spclass() == "total") {
-
-              "Species gains (%)"
-
-            } else {
-
-              if (spclass() == "birds") {
-
-                "Species gains (%)<br />(birds)"
-
-              } else {
-
-                "Species gains (%)<br />(mammals)"
-              }
-            }
-
-          } else {
-
-            if (information() == "losses") {
-
-              if (spclass() == "total") {
-
-                "Species losses (%)"
-
-              } else {
-
-                if (spclass() == "birds") {
-
-                  "Species losses (%)<br />(birds)"
-
-                } else {
-
-                  "Species losses (%)<br />(birds)"
-                }
-              }
-
-            } else {
-
-              if (spclass() == "total") {
-
-                "Total turnover"
-
-              } else {
-
-                if (spclass() == "birds") {
-
-                  "Birds turnover"
-
-                } else {
-
-                  "Mammals turnover"
-                }
-              }
-            }
-          }
-        }
-      })
-
-      information_lab2 <- reactive({
-
-        if (information() == "richness") {
-
-          if (spclass() == "total") {
-
-            "Total number of species"
-
-          } else {
-
-            if (spclass() == "birds") {
-
-              "Number of birds species"
-
-            } else {
-
-              "Number of mammals species"
-            }
-          }
-
-        } else {
-
-          if (information() == "gains") {
-
-            if (spclass() == "total") {
-
-              "Percentage of species gains"
-
-            } else {
-
-              if (spclass() == "birds") {
-
-                "Percentage of birds species gains"
-
-              } else {
-
-                "Percentage of mammals species gains"
-              }
-            }
-
-          } else {
-
-            if (information() == "losses") {
-
-              if (spclass() == "total") {
-
-                "Percentage of species losses"
-
-              } else {
-
-                if (spclass() == "birds") {
-
-                  "Percentage of birds species losses"
-
-                } else {
-
-                  "Percentage of mammals species losses"
-                }
-              }
-
-            } else {
-
-              if (spclass() == "total") {
-
-                "Total turnover"
-
-              } else {
-
-                if (spclass() == "birds") {
-
-                  "Birds turnover"
-
-                } else {
-
-                  "Mammals turnover"
-                }
-              }
-            }
-          }
-        }
-      })
-
-
-      ### GET SELECTED RAMP COLOR ----------------------------------------------
-
-      couleur <- reactive({
-
-        input[["color_ecosystem"]]
-      })
-
-
-      ### GET SELECTED DPI (FOR DOWNLOAD MAP) ----------------------------------
-
-      dpi <- reactive({
-
-        as.numeric(input[["dpi_ecosystem"]])
-      })
-
-
-      ### GET SELECTED MAP OUTPUT TYPE (FOR DOWNLOAD MAP) ----------------------
-
-      type <- reactive({
-
-        input[["format_ecosystem"]]
-      })
-
-
-      ### SET RASTER PATH ------------------------------------------------------
-
-      raster_path <- reactive({
-
-        pos <- which(
-          data_ecosystem[ , "info"]  == information() &
-          data_ecosystem[ , "class"] == spclass()
+      } else {
+
+        pos <- which(data()[ , "info"]  == information() & data()[ , "class"] == spclass())
+      }
+
+      code <- data()[pos, "code"]
+
+      if (period() == "1981-2010"){
+
+        paste0(
+          "data/",
+          ifelse(
+            test = suffix() == "species",
+            yes  = tolower(spclass()),
+            no   = ifelse(
+              test = suffix() != "vulnerability",
+              yes  = suffix(),
+              no   = "network"
+            )
+          ),
+          "/",
+          code,
+          "_",
+          ifelse(
+            test = suffix() == "species",
+            yes  = period(),
+            no   = gsub("-", "", period())
+          ),
+          filename_ext()
         )
 
-        code <- data_ecosystem[pos, "code"]
+      } else {
 
-        if (period() == "1981-2010"){
-
-          paste0(
-            "data/ecosystem/",
-            code,
-            "_",
-            gsub("-", "", period())
-          )
-
-        } else {
-
-          paste0(
-            "data/ecosystem/",
-            code,
-            "_",
-            gsub("-", "", period()),
-            "_",
-            tolower(gsub("\\.", "", rcp_lab()))
-          )
-        }
-      })
-
-      ### IMPORT RASTER --------------------------------------------------------
-
-      ras <- reactive({
-
-        readRDS(paste0(raster_path(), ".rds"))
-      })
-
-
-      ### CREATE COLOR PALETTE (BASED ON DATA) ---------------------------------
-
-      couleurs <- reactive({
-
-        # Color palette
-        mycol <- brewer.pal(
-          n    = rampcolors[which(rampcolors[ , "palette"] == gsub("-rev", "", couleur())), "maxcolors"],
-          name = gsub("-rev", "", couleur())
+        paste0(
+          "data/",
+          ifelse(
+            test = suffix() == "species",
+            yes  = tolower(spclass()),
+            no   = ifelse(
+              test = suffix() != "vulnerability",
+              yes  = suffix(),
+              no   = "network"
+            )
+          ),
+          "/",
+          code,
+          "_",
+          ifelse(
+            test = suffix() == "species",
+            yes  = period(),
+            no   = gsub("-", "", period())
+          ),
+          "_",
+          tolower(gsub("\\.", "", rcp_legend())),
+          filename_ext()
         )
+      }
 
-        # Reverse colors (if required)
-        if (length(grep("-rev", couleur())) == 1) {
+    } else {
 
-          mycol <- mycol[length(mycol):1]
-        }
+      NULL
+    }
+  })
 
-        # Categorize data
+
+  ### IMPORT RASTER --------------------------------------------------------
+
+  ras <- reactive({
+
+    if (!is.null(var_selected())) {
+
+      ras <- readRDS(paste0(raster_path(), ".rds"))
+
+      # Rescale probabilities
+      if (filename_ext() == "_probabilities") {
+
+        ras[][which(!is.na(ras[]))] <- ifelse(
+          test = ras[][which(!is.na(ras[]))] > 1,
+          yes  = 1,
+          no   = ras[][which(!is.na(ras[]))]
+        )
+      }
+
+      ras
+
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### GET SELECTED DPI (for exported map) --------------------------------------
+
+  dpi <- reactive({
+
+    if (!is.null(var_selected())) {
+
+      as.numeric(input[[paste0("dpi_", suffix())]])
+
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### GET SELECTED MAP OUTPUT TYPE (for exported map) --------------------------
+
+  type <- reactive({
+
+    if (!is.null(var_selected())) {
+
+      input[[paste0("format_", suffix())]]
+
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### GET SELECTED RAMP COLOR --------------------------------------------------
+
+  rampcolor <- reactive({
+
+    if (!is.null(var_selected())) {
+
+      input[[paste0("color_", suffix())]]
+
+    } else {
+
+      NULL
+    }
+  })
+
+
+  ### CREATE COLOR GRADIENT (based on data) ------------------------------------
+
+  couleurs <- reactive({
+
+    if (!is.null(var_selected())) {
+
+      # Color palette
+      mycol <- brewer.pal(
+        n    = rampcolors[which(rampcolors[ , "palette"] == gsub("-rev", "", rampcolor())), "maxcolors"],
+        name = gsub("-rev", "", rampcolor())
+      )
+
+      # Reverse colors (if required)
+      if (length(grep("-rev", rampcolor())) == 1) {
+
+        mycol <- mycol[length(mycol):1]
+      }
+
+      # More than 2 values
+      if (length(unique(values(ras()))) > 2) {
+
         colorNumeric(
           palette  = mycol,
           domain   = values(ras()),
           na.color = "transparent"
         )
-      })
-
-
-      ###
-      ### UPDATE UI INPUTS ----------------------------------[[ ECOSYSTEM TAB ]]
-      ###
-
-
-      if (period() == "1981-2010") {
-
-        ### DISABLE RCP RADIO --------------------------------------------------
-
-        shinyjs::disable(selector = "[type=radio][value='rcp45_ecosystem']")
-        shinyjs::disable(selector = "[type=radio][value='rcp85_ecosystem']")
-        shinyjs::runjs('$("#scenario_ecosystem .shiny-options-group").css({"color": "#aaa"});')
-        shinyjs::runjs('$("#scenario_ecosystem .shiny-options-group label").css({"cursor": "not-allowed"});')
-        shinyjs::runjs('$("[type=radio][value=\'rcp45_ecosystem\']").prop("checked", false);')
-        shinyjs::runjs('$("[type=radio][value=\'rcp85_ecosystem\']").prop("checked", false);')
-
-
-        ### DISABLE BUTTONS ----------------------------------------------------
-
-        shinyjs::disable(selector = "[type=radio][value='losses']")
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(2)").css({"color": "#aaa"});')
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(2) label").css({"cursor": "not-allowed"});')
-        shinyjs::disable(selector = "[type=radio][value='gains']")
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(3)").css({"color": "#aaa"});')
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(3) label").css({"cursor": "not-allowed"});')
-        shinyjs::disable(selector = "[type=radio][value='turnover']")
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(4)").css({"color": "#aaa"});')
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(4) label").css({"cursor": "not-allowed"});')
-
-        updateRadioButtons(session, inputId = "infos_ecosystem", selected = "richness")
 
       } else {
 
+        # If one single value (only presence or only absence)
+        if (length(which(unique(values(ras())) == 0) == 1)) {
 
-        ### ENABLE RCP RADIO ---------------------------------------------------
-
-        shinyjs::enable(selector = "[type=radio][value='rcp45_ecosystem']")
-        shinyjs::enable(selector = "[type=radio][value='rcp85_ecosystem']")
-        shinyjs::runjs('$("#scenario_ecosystem .shiny-options-group").css("color", "#555");')
-        shinyjs::runjs('$("#scenario_ecosystem .shiny-options-group label").css({"cursor": "pointer"});')
-
-        if (is.null(rcp())){
-
-          updateRadioButtons(session, inputId = "scenario_ecosystem", selected = "rcp45_ecosystem")
-
-        } else {
-
-          updateRadioButtons(session, inputId = "scenario_ecosystem", selected = rcp())
-
-        }
-
-        ### ENABLE BUTTONS -----------------------------------------------------
-
-        shinyjs::enable(selector = "[type=radio][value='losses']")
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(2)").css({"color": "#555"});')
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(2) label").css({"cursor": "pointer"});')
-        shinyjs::enable(selector = "[type=radio][value='gains']")
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(3)").css({"color": "#555"});')
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(3) label").css({"cursor": "pointer"});')
-        shinyjs::enable(selector = "[type=radio][value='turnover']")
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(4)").css({"color": "#555"});')
-        shinyjs::runjs('$("#infos_ecosystem .shiny-options-group .radio:nth-child(4) label").css({"cursor": "pointer"});')
-
-        updateRadioButtons(session, inputId = "infos_ecosystem", selected = information())
-
-      }
-
-      ### ENABLE / DISABLE DPI OPTION ------------------------------------------
-
-      if (!is.null(type())) {
-        if (type() == "PDF") {
-          shinyjs::disable(id = "dpi_ecosystem")
-        } else {
-          shinyjs::enable(id = "dpi_ecosystem")
-        }
-      }
-
-
-      ###
-      ### SHOW / HIDE COLOR PALETTES ------------------------[[ ECOSYSTEM TAB ]]
-      ###
-
-      onclick("grad_ecosystem", function() {
-        toggle(id = "menu_ecosystem")
-        toggleClass(id = "grad_ecosystem", class = "shadow")
-      })
-
-      onclick("menu_ecosystem", function(){
-        toggle(id = "menu_ecosystem")
-        toggleClass(id = "grad_ecosystem", class = "shadow")
-      })
-
-
-      ###
-      ### CLICK ON HELP BUTTON ------------------------------[[ ECOSYSTEM TAB ]]
-      ###
-
-      onclick("help-ecosystem", function(){
-
-        showModal(
-          modalDialog(
-
-            title = "Additional informations",
-
-            includeHTML("includes/help-ecosystem.html"),
-
-            easyClose = TRUE,
-            footer    = NULL
+          colorNumeric(
+            palette  = mycol[1],
+            domain   = values(ras()),
+            na.color = "transparent"
           )
-        )
-      })
+
+        # If binary data
+        } else {
+
+          colorNumeric(
+            palette  = mycol[length(mycol)],
+            domain   = values(ras()),
+            na.color = "transparent"
+          )
+        }
+      }
+
+    } else {
+
+      NULL
+    }
+  })
 
 
-      ###
-      ### UPDATE MAP ----------------------------------------[[ ECOSYSTEM TAB ]]
-      ###
+  ### UPDATE MAP / RESET MAP ---------------------------------------------------
+
+  observe({
+
+
+    ### UPDATE MAP -------------------------------------------------------------
+
+    if (!is.null(var_selected())) {
 
       leafletProxy(
-        mapId = "map_ecosystem",
+        mapId = paste0("map_", suffix()),
         data  = area()
       ) %>%
 
@@ -2293,33 +1222,292 @@ server <- function(input, output, session) {
         position  = "bottomleft",
         pal       = couleurs(),
         values    = ras()[],
-        title     = information_lab(),
+        title     = leaflet_title(),
         opacity   = 1,
         className = "info legend"
       )
 
 
-      ###
-      ### CLICK ON DOWNLOAD BUTTON (MAIN PANEL) -------------[[ ECOSYSTEM TAB ]]
-      ###
+    ### RESET MAP --------------------------------------------------------------
 
-      onclick("btn-ecosystem", function(){
+    } else {
+
+      leafletProxy(
+        mapId = paste0("map_", suffix()),
+        data  = area()
+      ) %>%
+      clearShapes() %>% clearControls() %>% clearImages() %>%
+
+      addPolygons(
+        color       = "#8e501d",
+        weight      = 2.0,
+        opacity     = 1.0,
+        fillOpacity = 0,
+        fillColor   = "transparent"
+      ) %>%
+
+      fitBounds(
+        lng1 = ~coords()[1],
+        lat1 = ~coords()[2],
+        lng2 = ~coords()[3],
+        lat2 = ~coords()[4]
+      )
+    }
+  })
 
 
-        ### SHOW DOWNLOAD PARAMETERS -------------------------------------------
+  ### UPDATE LIST OF VARIABLES / SPECIES (select menus) ------------------------
+
+  observe({
+
+    if (suffix() %in% c("species", "climate", "network")) {
+
+      updateSelectInput(
+        session  = session,
+        inputId  = paste0("select_", suffix()),
+        label    = NULL,
+        choices  = var_list(),
+        selected = ifelse(!is.null(var_selected()), var_selected(), "")
+      )
+    }
+  })
+
+
+  ### ENABLE / DISABLE RCP RADIO BUTTONS ---------------------------------------
+
+  observe({
+
+    if (!is.null(period())) {
+
+      # Disable
+      if (period() == "1981-2010") {
+
+        for (i in c("rcp45_", "rcp85_")) {
+
+          shinyjs::disable(selector = paste0("[type=radio][value='", i, suffix(), "']"))
+          shinyjs::runjs(paste0("$(\"[type=radio][value='", i, suffix(), "']\").prop(\"checked\", false);"))
+        }
+
+        shinyjs::runjs(paste0('$("#scenario_', suffix(), ' .shiny-options-group").css({"color": "#aaa"});'))
+        shinyjs::runjs(paste0('$("#scenario_', suffix(), ' .shiny-options-group label").css({"cursor": "not-allowed"});'))
+
+      # Enable
+      } else {
+
+        for (i in c("rcp45_", "rcp85_")) {
+
+          shinyjs::enable(selector = paste0("[type=radio][value='", i, suffix(), "']"))
+        }
+
+        shinyjs::runjs(paste0('$("#scenario_', suffix(), ' .shiny-options-group").css({"color": "#555"});'))
+        shinyjs::runjs(paste0('$("#scenario_', suffix(), ' .shiny-options-group label").css({"cursor": "pointer"});'))
+
+        updateRadioButtons(
+          session = session,
+          inputId = paste0("scenario_", suffix()),
+          selected = rcp()
+        )
+      }
+    }
+  })
+
+
+  ### ENABLE / DISABLE INFORMATION RADIO BUTTON --------------------------------
+
+  observe({
+
+    if (suffix() == "climate") {
+
+      xxx <- c("normals_", "anomalies_", "uncertainties_")
+
+      if (period() == "1981-2010") {
+
+        for (i in 2:3) {
+
+          shinyjs::disable(selector = paste0("[type=radio][value='", xxx[i], suffix(), "']"))
+          shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(', i, ')").css({"color": "#aaa"});'))
+          shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(', i, ') label").css({"cursor": "not-allowed"});'))
+          shinyjs::runjs(paste0("$(\"[type=radio][value='", xxx[i], suffix(), "']\").prop(\"checked\", false);"))
+        }
+
+      } else {
+
+        for (i in 2:3) {
+
+          shinyjs::enable(selector = paste0("[type=radio][value='", xxx[i], suffix(), "']"))
+          shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(', i, ')").css({"color": "#555"});'))
+          shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(', i, ') label").css({"cursor": "pointer"});'))
+        }
+      }
+
+      updateRadioButtons(
+        session  = session,
+        inputId  = paste0("infos_", suffix()),
+        selected = information()
+      )
+
+    } else {
+
+      if (suffix() == "species") {
+
+        if (period() == "1981-2010") {
+
+          shinyjs::enable(selector = "[type=radio][value='observations_species']")
+          shinyjs::runjs('$("#infos_species .shiny-options-group .radio:first-child").css({"color": "#555"});')
+          shinyjs::runjs('$("#infos_species .shiny-options-group .radio:first-child label").css({"cursor": "pointer"});')
+
+        } else {
+
+          shinyjs::disable(selector = "[type=radio][value='observations_species']")
+          shinyjs::runjs('$("#infos_species .shiny-options-group .radio:first-child").css({"color": "#aaa"});')
+          shinyjs::runjs('$("#infos_species .shiny-options-group .radio:first-child label").css({"cursor": "not-allowed"});')
+        }
+
+        updateRadioButtons(
+          session  = session,
+          inputId  = paste0("infos_", suffix()),
+          selected = information()
+        )
+
+      } else {
+
+        if (suffix() == "ecosystem") {
+
+          xxx <- c("richness", "gains", "losses", "turnover")
+
+          if (period() == "1981-2010") {
+
+            for (i in 2:4) {
+
+              shinyjs::disable(selector = paste0("[type=radio][value='", xxx[i], "']"))
+              shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(', i, ')").css({"color": "#aaa"});'))
+              shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(', i, ') label").css({"cursor": "not-allowed"});'))
+              shinyjs::runjs(paste0("$(\"[type=radio][value='", xxx[i], "']\").prop(\"checked\", false);"))
+            }
+
+          } else {
+
+            for (i in 2:4) {
+
+              shinyjs::enable(selector = paste0("[type=radio][value='", xxx[i], "']"))
+              shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(', i, ')").css({"color": "#555"});'))
+              shinyjs::runjs(paste0('$("#infos_', suffix(), ' .shiny-options-group .radio:nth-child(', i, ') label").css({"cursor": "pointer"});'))
+            }
+          }
+
+          updateRadioButtons(
+            session  = session,
+            inputId  = paste0("infos_", suffix()),
+            selected = information()
+          )
+
+        } else {
+
+          if (suffix() == "network") {
+
+            if (period() == "1981-2010") {
+
+              shinyjs::disable(selector = "[type=radio][value='anomalies_network']")
+              shinyjs::runjs('$("#infos_network .shiny-options-group .radio:nth-child(2)").css({"color": "#aaa"});')
+              shinyjs::runjs('$("#infos_network .shiny-options-group .radio:nth-child(2) label").css({"cursor": "not-allowed"});')
+
+            } else {
+
+              shinyjs::enable(selector = "[type=radio][value='anomalies_network']")
+              shinyjs::runjs('$("#infos_network .shiny-options-group .radio:nth-child(2)").css({"color": "#555"});')
+              shinyjs::runjs('$("#infos_network .shiny-options-group .radio:nth-child(2) label").css({"cursor": "pointer"});')
+            }
+
+            updateRadioButtons(
+              session  = session,
+              inputId  = paste0("infos_", suffix()),
+              selected = information()
+            )
+          }
+        }
+      }
+    }
+  })
+
+
+  ### ENABLE / DISABLE DPI OPTION IF PDF ---------------------------------------
+
+  observe({
+
+    if (!is.null(type())) {
+
+      if (type() == "PDF") {
+
+        shinyjs::disable(id = paste0("dpi_", suffix()))
+
+      } else {
+
+        shinyjs::enable(id = paste0("dpi_", suffix()))
+      }
+    }
+  })
+
+
+  ### SHOW / HIDE (ON CLICK) AVAILABLE COLOR PALETTES --------------------------
+
+  observe({
+
+    onclick(paste0("grad_", suffix()), function() {
+      toggle(id = paste0("menu_", suffix()))
+      toggleClass(id = paste0("grad_", suffix()), class = "shadow")
+    })
+
+    onclick(paste0("menu_", suffix()), function(){
+      toggle(id = paste0("menu_", suffix()))
+      toggleClass(id = paste0("grad_", suffix()), class = "shadow")
+    })
+  })
+
+
+  ### CLICK ON INFORMATION BUTTON (main panel) ---------------------------------
+
+  observe({
+
+    onclick(paste0("help-", suffix()), function(){
+
+      showModal(
+        modalDialog(
+
+          title = "Additional informations",
+
+          includeHTML(paste0("includes/help-", suffix(), ".html")),
+
+          easyClose = TRUE,
+          footer    = NULL
+        )
+      )
+    })
+  })
+
+
+  ### CLICK ON DOWNLOAD BUTTON (main panel) ------------------------------------
+
+  observe({
+
+    onclick(paste0("btn-", suffix()), function(){
+
+
+      ### SHOW DOWNLOAD PARAMETERS -------------------------------------------
+
+      if (!is.null(var_selected())) {
 
         showModal(
           modalDialog(
 
             title = "Download options",
 
-            HTML("<div id=\"save_ecosystem\">"),
+            HTML(paste0("<div id=\"save_", suffix(), "\">")),
 
             fluidRow(
 
               column(6,
                 radioButtons(
-                  inputId  = "format_ecosystem",
+                  inputId  = paste0("format_", suffix()),
                   label    = "Output format:",
                   choices  = c("PNG", "JPEG", "TIFF", "PDF"),
                   selected = "PNG",
@@ -2329,7 +1517,7 @@ server <- function(input, output, session) {
 
               column(6,
                 selectInput(
-                  inputId  = "dpi_ecosystem",
+                  inputId  = paste0("dpi_", suffix()),
                   label    = "Resolution (dpi):",
                   choices  = c(72, 96, 150, 300, 600, 900),
                   selected = 300,
@@ -2339,173 +1527,200 @@ server <- function(input, output, session) {
             ),
 
             HTML("<div class=\"bouton\">"),
-            downloadButton("download_ecosystem", "Download map"),
+            downloadButton(paste0("download_", suffix()), "Download map"),
             HTML("<br /></div></div>"),
 
             easyClose = TRUE,
             footer    = NULL
           )
         )
-      })
 
 
-      ###
-      ### CLICK DOWNLOAD BUTTON (POPUP WINDOW) --------------[[ ECOSYSTEM TAB ]]
-      ###
+      ### ERROR MESSAGE (NO VARIABLE SELECTED) -------------------------------
 
-      output$download_ecosystem <- downloadHandler(
+      } else {
 
-        filename =  function() {
+        showModal(
+          modalDialog(
 
+            title = "Warning!",
 
-          ### EXPORTED MAP NAME ------------------------------------------------
-
-          paste0(
-            "map-",
-            gsub("[[:punct:]]|[[:space:]]", "", Sys.time()),
-            ".",
-            tolower(type())
+            HTML(
+              paste0(
+                "<div class=\"msg\">",
+                ifelse(
+                  test = suffix() == "species",
+                  yes  = "Please select a species.",
+                  no   = "Please select a variable."
+                ),
+                "<br /><br />",
+                "<i class=\"fas fa-times-circle fa-4x\"></i>",
+                "<br /><br />",
+                "</div>"
+              )
+            ),
+            easyClose = TRUE,
+            footer    = NULL
           )
-        },
+        )
+      }
+    })
+  })
 
-        content  = function(file) {
+
+  ### CLICK ON DOWNLOAD BUTTON (popup window) ----------------------------------
+
+  for (btn in c("download_species", "download_climate", "download_ecosystem", "download_network", "download_vulnerability")) {
+
+    output[[btn]] <- downloadHandler(
+
+      filename =  function() {
 
 
-          ### MESSAGE DURING MAP PREPARATION -----------------------------------
+        ### FILE NAME ----------------------------------------------------------
 
-          showModal(
-            modalDialog(
+        paste0(
+          "map-",
+          gsub("[[:punct:]]|[[:space:]]", "", Sys.time()),
+          ".",
+          tolower(type())
+        )
+      },
 
-              title = "Message",
+      content  = function(file) {
 
-              HTML(
-                paste0(
-                  "<div class=\"msg\">",
-                  "Your map is being prepared.",
-                  "<br />",
-                  "Please wait a few seconds...",
-                  "<br /><br />",
-                  "<i class=\"fas fa-spinner faa-spin animated fa-4x\"></i>",
-                  "<br /><br />",
-                  "</div>"
-                )
-              ),
-              easyClose = FALSE,
-              footer    = NULL
-            )
+
+        ### MESSAGE DURING MAP PREPARATION -------------------------------------
+
+        showModal(
+          modalDialog(
+
+            title = "Message",
+
+            HTML(
+              paste0(
+                "<div class=\"msg\">",
+                "Your map is being prepared.",
+                "<br />",
+                "Please wait a few seconds...",
+                "<br /><br />",
+                "<i class=\"fas fa-spinner faa-spin animated fa-4x\"></i>",
+                "<br /><br />",
+                "</div>"
+              )
+            ),
+            easyClose = FALSE,
+            footer    = NULL
           )
+        )
 
 
-          ### DEVISE INITIALISATION --------------------------------------------
+        ### DEVISE INITIALISATION ------------------------------------------------
 
-          if (type() == "PNG") {
-            CairoPNG(
-              filename  = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent",
-              units     = "in",
-              res       = dpi()
-            )
-          }
-
-          if (type() == "JPEG") {
-            CairoJPEG(
-              filename  = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent",
-              units     = "in",
-              res       = dpi()
-            )
-          }
-
-          if (type() == "TIFF") {
-            CairoTIFF(
-              filename  = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent",
-              units     = "in",
-              res       = dpi()
-            )
-          }
-
-          if (type() == "PDF") {
-            CairoPDF(
-              file      = file,
-              width     = 5.00 * 1.2,
-              height    = 5.80 * 1.2,
-              pointsize = 14,
-              bg        = "transparent"
-            )
-          }
-
-
-          ### MAP INFORMATIONS -------------------------------------------------
-
-          titre <- paste0(
-            information_lab2(),
-            " ",
-            period(),
-            ifelse(
-              !is.null(rcp()),
-              paste0(" [", rcp_lab(), "]"),
-              ""
-            )
+        if (type() == "PNG") {
+          CairoPNG(
+            filename  = file,
+            width     = 5.00 * 1.2,
+            height    = 5.80 * 1.2,
+            pointsize = 14,
+            bg        = "transparent",
+            units     = "in",
+            res       = dpi()
           )
+        }
 
-          datasource <- NULL
+        if (type() == "JPEG") {
+          CairoJPEG(
+            filename  = file,
+            width     = 5.00 * 1.2,
+            height    = 5.80 * 1.2,
+            pointsize = 14,
+            bg        = "transparent",
+            units     = "in",
+            res       = dpi()
+          )
+        }
+
+        if (type() == "TIFF") {
+          CairoTIFF(
+            filename  = file,
+            width     = 5.00 * 1.2,
+            height    = 5.80 * 1.2,
+            pointsize = 14,
+            bg        = "transparent",
+            units     = "in",
+            res       = dpi()
+          )
+        }
+
+        if (type() == "PDF") {
+          CairoPDF(
+            file      = file,
+            width     = 5.00 * 1.2,
+            height    = 5.80 * 1.2,
+            pointsize = 14,
+            bg        = "transparent"
+          )
+        }
 
 
-          ### MAP PRODUCTION ---------------------------------------------------
+        ### MAP PRODUCTION -------------------------------------------------------
 
-          mapTundra(
+        if (suffix() %in% c("climate", "species")) {
+
+          mapQuebec(
             x          = ras(),
-            title      = titre,
-            type       = NULL,
-            datasource = datasource,
-            palette    = gsub("-rev", "", couleur()),
-            reverse    = ifelse(length(grep("-rev", couleur())) == 1, TRUE, FALSE),
+            title      = legend_title(),
+            type       = ifelse(leaflet_title() %in% c("Observations", "Presence/absence"), "binary", 1),
+            datasource = data_source(),
+            palette    = gsub("-rev", "", rampcolor()),
+            reverse    = ifelse(length(grep("-rev", rampcolor())) == 1, TRUE, FALSE),
             bins       = 7
           )
 
+        } else {
 
-          ### DEVISE CLOSING ---------------------------------------------------
-
-          dev.off()
-
-
-          ### SUCCESS MESSAGE --------------------------------------------------
-
-          removeModal()
-
-          showModal(
-            modalDialog(
-
-              title = "Congratulations!",
-              HTML(
-                paste0(
-                  "<div class=\"msg\">",
-                  "Your map has been successfully downloaded.",
-                  "<br /><br />",
-                  "<i class=\"fas fa-check-circle fa-4x\"></i>",
-                  "<br /><br />",
-                  "</div>"
-                )
-              ),
-              easyClose = TRUE,
-              footer    = NULL
-            )
+          mapTundra(
+            x          = ras(),
+            title      = legend_title(),
+            type       = 1,
+            datasource = NULL,
+            palette    = gsub("-rev", "", rampcolor()),
+            reverse    = ifelse(length(grep("-rev", rampcolor())) == 1, TRUE, FALSE),
+            bins       = 7
           )
         }
-      )
 
 
+        ### DEVISE CLOSING -------------------------------------------------------
 
-    }
-  })
+        dev.off()
+
+
+        ### SUCCESS MESSAGE ------------------------------------------------------
+
+        removeModal()
+
+        showModal(
+          modalDialog(
+
+            title = "Congratulations!",
+
+            HTML(
+              paste0(
+                "<div class=\"msg\">",
+                "Your map has been downloaded.",
+                "<br /><br />",
+                "<i class=\"fas fa-check-circle fa-4x\"></i>",
+                "<br /><br />",
+                "</div>"
+              )
+            ),
+            easyClose = TRUE,
+            footer    = NULL
+          )
+        )
+      }
+    )
+  }
 }

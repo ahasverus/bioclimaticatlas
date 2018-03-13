@@ -31,12 +31,12 @@ div.outer {
 }
 
 #nav li {
-  float: left;
+  /* float: left; */
 }
 
 #nav li:nth-last-child(1) {
-  float:   none;
-  display: inline-block;
+  /* float:   none; */
+  /* display: inline-block; */
 }
 
 #nav li:last-of-type a {
@@ -82,7 +82,9 @@ a:hover {
 
 #map_climate,
 #map_species,
-#map_ecosystem {
+#map_ecosystem,
+#map_network,
+#map_vulnerability {
   margin:        0;
   margin:        0;
   border:        1px solid #ddd;
@@ -100,7 +102,9 @@ a:hover {
 
 #panel_species,
 #panel_climate,
-#panel_ecosystem {
+#panel_ecosystem,
+#panel_network,
+#panel_vulnerability {
   background-color: white;
   padding:          0 20px 20px 20px;
   cursor:           move;
@@ -111,7 +115,9 @@ a:hover {
 
 #panel_species:hover,
 #panel_climate:hover,
-#panel_ecosystem:hover {
+#panel_ecosystem:hover,
+#panel_network:hover,
+#panel_vulnerability:hover {
   opacity:          0.95;
   transition-delay: 0;
 }
@@ -124,7 +130,11 @@ label.control-label,
 #class_climate,
 #select_climate,
 #class_ecosystem,
-#select_ecosystem {
+#select_ecosystem,
+#class_network,
+#select_network,
+#class_vulnerability,
+#select_vulnerability {
   color:     #555;
   font-size: 14px;
 }
@@ -207,7 +217,9 @@ div.radio {
 
 #menu_species,
 #menu_climate,
-#menu_ecosystem {
+#menu_ecosystem,
+#menu_network,
+#menu_vulnerability {
   overflow:      scroll;
   height:        100px;
   display:       none;
@@ -219,7 +231,9 @@ div.radio {
 
 #grad_species,
 #grad_climate,
-#grad_ecosystem {
+#grad_ecosystem,
+#grad_network,
+#grad_vulnerability {
   border:        1px solid #cccccc;
   border-radius: 5px;
   padding:       0;
@@ -229,7 +243,9 @@ div.radio {
 
 #color-sel_species,
 #color-sel_climate,
-#color-sel_ecosystem {
+#color-sel_ecosystem,
+#color-sel_network,
+#color-sel_vulnerability {
   vertical-align: middle;
   margin:         5px;
   padding:        0;
@@ -253,7 +269,9 @@ div.radio {
 
 #color-arrow_species,
 #color-arrow_climate,
-#color-arrow_ecosystem {
+#color-arrow_ecosystem,
+#color-arrow_network,
+#color-arrow_vulnerability {
   float:        left;
   width:        8%;
   height:       25px;
@@ -273,19 +291,27 @@ i.fa-caret-down {
 #menu_climate:hover,
 #grad_climate:hover,
 #menu_ecosystem:hover,
-#grad_ecosystem:hover {
+#grad_ecosystem:hover,
+#menu_network:hover,
+#grad_network:hover,
+#menu_vulnerability:hover,
+#grad_vulnerability:hover {
   cursor: pointer;
 }
 
 #menu_species > div:first-of-type,
 #menu_climate > div:first-of-type,
-#menu_ecosystem > div:first-of-type {
+#menu_ecosystem > div:first-of-type,
+#menu_network > div:first-of-type,
+#menu_vulnerability > div:first-of-type {
   margin-top: 4px;
 }
 
 #menu_species > div:last-of-type,
 #menu_climate > div:last-of-type,
-#menu_ecosystem > div:last-of-type {
+#menu_ecosystem > div:last-of-type,
+#menu_network > div:last-of-type,
+#menu_vulnerability > div:last-of-type {
   margin-bottom: 4px;
 }
 
@@ -298,7 +324,9 @@ i.fa-caret-down {
 
 #save_species,
 #save_climate,
-#save_ecosystem {
+#save_ecosystem,
+#save_network,
+#save_vulnerability {
   margin-top: 20px;
   /* display:    none; */
 }
