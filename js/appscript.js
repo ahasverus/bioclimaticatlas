@@ -3,7 +3,7 @@ $(document).ready(function() {
 
   // Add Get Code GitHub link in NavBar
 
-  $("#nav").append('<li class="github"><a href="https://github.com/ahasverus/shiny-tundra-cc"><i class="fab fa-github"></i> Get Code</a></li>');
+  $("#nav").append('<li class="github"><a href="https://github.com/ahasverus/bioclimaticatlas"><i class="fab fa-github"></i> Get Code</a></li>');
 
 
   // Update selected color palette (on click)
