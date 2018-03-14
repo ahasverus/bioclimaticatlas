@@ -692,10 +692,10 @@ ui <- navbarPage(
             '<i class="fa fa-download"></i>',
             'Download Map',
             '</div>',
-            '<div id="help-vulnerability" class="btn-png btn-right">',
-            '<i class="fa fa-info-circle"></i>',
-            'Informations',
-            '</div>',
+            # '<div id="help-vulnerability" class="btn-png btn-right">',
+            # '<i class="fa fa-info-circle"></i>',
+            # 'Informations',
+            # '</div>',
             '</div>'
           )
         )
