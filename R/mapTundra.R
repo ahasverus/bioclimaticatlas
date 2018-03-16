@@ -90,7 +90,7 @@ mapTundra <- function(x, title, type = NULL, datasource, palette = "Spectral", r
   )
 
   plot(
-    readRDS("data/background/ocean-na.rds"),
+    readRDS("data/background/ocean.rds"),
     add = TRUE, col = watin, border = watou
   )
 
