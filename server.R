@@ -1475,7 +1475,7 @@ server <- function(input, output, session) {
 
           title = "Additional informations",
 
-          includeHTML(paste0("includes/help-", suffix(), ".html")),
+          withMathJax(helpText(includeHTML(paste0("includes/help-", suffix(), ".html")))),
 
           easyClose = TRUE,
           footer    = NULL
