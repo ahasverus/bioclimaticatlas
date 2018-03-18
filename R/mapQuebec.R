@@ -363,4 +363,33 @@ mapQuebec <- function(x, title, type = NULL, datasource, palette = "Spectral", r
     cex    = 0.55,
     pos    = 2
   )
+
+
+  ### ADD NORTH ARROW ----------------------------------------------------------
+
+  par(
+    xaxs   = "i",
+    yaxs   = "i",
+    family = "serif",
+    mar    = c(4.50, 1.70, 0.75, 1.70),
+    new    = FALSE,
+    xpd    = FALSE
+  )
+
+  plot(0, xlim = c(-1, 1), ylim = c(-1, 1), axes = FALSE, ann = FALSE, type = "n")
+
+  xrose <- .815 ; yrose <- .675
+  compassRose(x = xrose, y = yrose, cex.cr = .475, cex.let = .5,
+    col = c("#b4d1d1", dark1), border = dark1, labels = "", rot = -67.5
+  )
+  compassRose(x = xrose, y = yrose, cex.cr = .475, cex.let = .5,
+    col = c("#b4d1d1", dark1), border = dark1, labels = "", rot = -22.5
+  )
+  compassRose(x = xrose, y = yrose, cex.cr = .65, cex.let = .5,
+    col = c("#b4d1d1", dark1), border = dark1, labels = "", rot = -45
+  )
+
+  compassRose(x = xrose, y = yrose, cex.cr = .75, cex.let = .5,
+    col = c("#b4d1d1", dark1), border = dark1, offset = 1.15, col.let = dark1
+  )
 }
